@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 14:59:12
+# @Last Modified time: 2018-05-14 10:53:55
 
 import argparse
 from collections import defaultdict
@@ -41,9 +41,13 @@ def main(args):
                     pos += 1
                 sent_idxs = {si for si, _ in epos[src] + epos[tgt]}
                 sents = [content[si] for si in sent_idxs]
-                s_pos = [(sents.index(content[si]), wi) for si, wi in epos[src]]
-                t_pos = [(sents.index(content[si]), wi) for si, wi in epos[tgt]]
-                dpos = {'src_pos': s_pos, 'tgt_pos': t_pos, 'sents': sents, 'label': label}
+
+                s_abs_pos = epos[src]
+                t_abs_pos = epos[tgt]
+                s_pos = [(sents.index(content[si]), wi) for si, wi in s_abs_pos]
+                t_pos = [(sents.index(content[si]), wi) for si, wi in t_abs_pos]
+                dpos = {'src_pos': s_pos, 'src_abs_pos': s_abs_pos, 'tgt_pos': t_pos,
+                        'tgt_abs_pos': t_abs_pos, 'sents': sents, 'label': label}
                 fout.write(json.dumps(dpos) + '\n')
                 sampeles += 1
     print(f'{articles} articles generate {sampeles} samples.')

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:42:04
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 20:39:33
+# @Last Modified time: 2018-05-14 11:03:33
 """Implementation of the Blame Extractor Baseline Class."""
 
 # ------------------------------------------------------------------------------
@@ -27,14 +27,14 @@ class LexiconClassifier(object):
         self.mode = mode
 
     def predict(self, ex):
-        batch_spos, batch_tpos, batch_sents = ex
+        batch_spos, batch_sapos, batch_tpos, batch_tapos, batch_sents = ex
         predicts = []
-        for spos, tpos, sents in zip(batch_spos, batch_tpos, batch_sents):
+        for spos, sapos, tpos, tapos, sents in zip(batch_spos, batch_sapos, batch_tpos, batch_tapos, batch_sents):
             sents = [' '.join(s) for s in sents]
             if self.mode == 'mode1':
-                label = self._mode1(spos, tpos)
+                label = self._mode1(sapos, tapos)
             elif self.mode == 'mode2':
-                label = self._mode2(spos, tpos)
+                label = self._mode2(sapos, tapos)
             elif self.mode == 'mode3':
                 label = self._mode3(spos, tpos, sents)
             elif self.mode == 'mode1+mode3':
