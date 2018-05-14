@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-12 12:00:38
+# @Last Modified time: 2018-05-14 13:47:22
 
 """Train the blame tie extractor"""
 
@@ -65,6 +65,8 @@ def add_train_args(parser):
                                'operations (for reproducibility)'))
     runtime.add_argument('--num-epochs', type=int, default=30,
                          help='Train data iterations')
+    runtime.add_argument('--early-stopping', type=int, default=5,
+                         help='Early stopping patience')
     runtime.add_argument('--batch-size', type=int, default=50,
                          help='Batch size for training')
     runtime.add_argument('--test-batch-size', type=int, default=50,
@@ -97,6 +99,11 @@ def add_train_args(parser):
                          default=['precision', 'recall', 'F1', 'acc'])
     general.add_argument('--valid-metric', type=str, default='F1',
                          help='The evaluation metric used for model selection')
+
+    # debug
+    debug = parser.add_argument_group('Debug')
+    debug.add_argument('--debug', type='bool', default=False,
+                       help='Debug mode: only run 1/10 fold.')
 
 
 def set_defaults(args):
@@ -260,28 +267,35 @@ def train_valid_loop(train_loader, dev_loader, args, model, test_loader=None, fo
     logger.info('-' * 100)
     stats = {'timer': utils.Timer(), 'epoch': 0, 'best_valid': 0, 'best_epoch': 0}
     start_epoch = 0
-    for epoch in range(start_epoch, args.num_epochs):
-        stats['epoch'] = epoch
+    try:
+        for epoch in range(start_epoch, args.num_epochs):
+            stats['epoch'] = epoch
 
-        # Train
-        train(args, train_loader, model, stats)
+            # Train
+            train(args, train_loader, model, stats)
 
-        # Validate train
-        validate(args, train_loader, model, stats, mode='train')
+            # Validate train
+            validate(args, train_loader, model, stats, mode='train')
 
-        # Validate dev
-        result = validate(args, dev_loader, model, stats, mode='dev')
+            # Validate dev
+            result = validate(args, dev_loader, model, stats, mode='dev')
 
-        # Save best valid
-        if result[args.valid_metric] > stats['best_valid']:
-            logger.info(
-                colored(f'Best valid: {args.valid_metric} = {result[args.valid_metric]*100:.2f}% ', 'yellow') +
-                colored(f'(epoch {stats["epoch"]}, {model.updates} updates)', 'yellow'))
-            fold_info = f'.fold_{fold}' if fold is not None else ''
-            model.save(args.model_file + fold_info)
-            stats['best_valid'] = result[args.valid_metric]
-            stats['best_epoch'] = epoch
-        logger.info('-' * 100)
+            # Save best valid
+            if result[args.valid_metric] > stats['best_valid']:
+                logger.info(
+                    colored(f'Best valid: {args.valid_metric} = {result[args.valid_metric]*100:.2f}% ', 'yellow') +
+                    colored(f'(epoch {stats["epoch"]}, {model.updates} updates)', 'yellow'))
+                fold_info = f'.fold_{fold}' if fold is not None else ''
+                model.save(args.model_file + fold_info)
+                stats['best_valid'] = result[args.valid_metric]
+                stats['best_epoch'] = epoch
+            logger.info('-' * 100)
+
+            if epoch - stats['best_epoch'] >= args.early_stopping:
+                logger.info(colored(f'No improvement for {args.early_stopping} epochs, stop training.', 'red'))
+                break
+    except KeyboardInterrupt:
+        logger.info(colored(f'User ended training. stop.', 'red'))
 
     logger.info('Load best model...')
     model = BlameExtractor.load(args.model_file + fold_info, args)
@@ -370,8 +384,10 @@ def main(args):
                 train_exs, args, model, fold_samples[fold], weighted=args.weighted_sampling)
             result = train_valid_loop(train_loader, dev_loader, args, model, fold=fold)
             results.append(result[args.valid_metric])
-            # logger.debug(colored('DEBUG: Run for 1 folds. Stop.', 'red'))
-            # break
+            if args.debug:
+                # DEBUG
+                logger.debug(colored('DEBUG: Run for 1 folds. Stop.', 'red'))
+                break
         result = np.mean(results).item()
         logger.info('-' * 100)
         logger.info(f'CV {args.valid_metric}: {result*100:.2f}%')

@@ -55,7 +55,7 @@ def add_train_args(parser):
                          help='Train on CPU, even if GPUs are available.')
     runtime.add_argument('--gpu', type=int, default=0,
                          help='Run on a specific GPU')
-    runtime.add_argument('--data-workers', type=int, default=1,
+    runtime.add_argument('--data-workers', type=int, default=0,
                          help='Number of subprocesses for data loading')
     runtime.add_argument('--parallel', type='bool', default=False,
                          help='Use DataParallel on all available GPUs')
@@ -92,13 +92,18 @@ def add_train_args(parser):
 
     # General
     general = parser.add_argument_group('General')
-    general.add_argument('--display-iter', type=int, default=25,
+    general.add_argument('--display-iter', type=int, default=100,
                          help='Log state after every <display_iter> batches')
     general.add_argument('--metrics', type=str, choices=['precision', 'recall', 'F1', 'acc'],
                          help='metrics to display when training', nargs='+',
-                         default=['acc'])
-    general.add_argument('--valid-metric', type=str, default='acc',
+                         default=['precision', 'recall', 'F1', 'acc'])
+    general.add_argument('--valid-metric', type=str, default='F1',
                          help='The evaluation metric used for model selection')
+
+    # debug
+    debug = parser.add_argument_group('Debug')
+    debug.add_argument('--debug', type='bool', default=False,
+                       help='Debug mode: only run 1/10 fold.')
 
 
 def set_defaults(args):
@@ -368,12 +373,16 @@ def main(args):
             fold_samples[sample_fold].append(sample_idx)
         for fold in range(10):
             fold_info = f'for fold {fold}' if fold is not None else ''
-            print(colored(f'\nStarting training {fold_info}...\n', 'blue'))
+            logger.info(colored(f'\nStarting training {fold_info}...\n', 'blue'))
             model = initialize_model(train_exs, dev_exs, test_exs)
             train_loader, dev_loader = utils.split_loader_cv(
                 train_exs, args, model, fold_samples[fold], weighted=args.weighted_sampling)
             result = train_valid_loop(train_loader, dev_loader, args, model, fold=fold)
             results.append(result[args.valid_metric])
+            if args.debug:
+                # DEBUG
+                logger.debug(colored('DEBUG: Run for 1 folds. Stop.', 'red'))
+                break
         result = np.mean(results).item()
         logger.info('-' * 100)
         logger.info(f'CV {args.valid_metric}: {result*100:.2f}%')

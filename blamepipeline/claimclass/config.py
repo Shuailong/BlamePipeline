@@ -67,9 +67,9 @@ def add_model_args(parser):
                        help='Dropout rate for CNN output')
     optim.add_argument('--dropout-rnn-output', type='bool', default=True,
                        help='Whether to dropout the RNN output')
-    optim.add_argument('--optimizer', type=str, default='adadelta',
+    optim.add_argument('--optimizer', type=str, default='adam',
                        help='Optimizer: sgd or adam')
-    optim.add_argument('--learning-rate', type=float, default=1,
+    optim.add_argument('--learning-rate', type=float, default=0.001,
                        help='Initial learning rate')
     optim.add_argument('--grad-clipping', type=float, default=3,
                        help='Gradient clipping')
@@ -81,7 +81,7 @@ def add_model_args(parser):
                        help='Keep word embeddings fixed (use pretrained)')
     optim.add_argument('--rnn-padding', type='bool', default=False,
                        help='Explicitly account for padding in RNN encoding')
-    optim.add_argument('--weighted-sampling', type='bool', default=False,
+    optim.add_argument('--weighted-sampling', type='bool', default=True,
                        help='Weighted sampling during training')
 
 
