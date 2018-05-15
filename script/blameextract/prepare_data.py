@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-13 22:44:53
+# @Last Modified time: 2018-05-14 13:54:38
 
 import argparse
 from collections import defaultdict
@@ -14,11 +14,13 @@ from itertools import permutations
 
 
 def main(args):
-    print(args)
     articles, samples, pos = 0, 0, 0
+    fname, ext = os.path.splitext(args.samples_file)
     if args.ignore_direction:
-        fname, ext = os.path.splitext(args.samples_file)
         args.samples_file = fname + '-undirected' + ext
+    else:
+        args.samples_file = fname + '-directed' + ext
+    print(args)
     with open(args.dataset_file) as f,\
             open(args.samples_file, 'w') as fout:
         for line in f:
