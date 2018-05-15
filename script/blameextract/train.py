@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-14 13:47:22
+# @Last Modified time: 2018-05-15 14:43:43
 
 """Train the blame tie extractor"""
 
@@ -86,6 +86,8 @@ def add_train_args(parser):
                        help='dev file')
     files.add_argument('--test-file', type=str, default=None,
                        help='test file')
+    files.add_argument('--stats-file', type='bool', default=False,
+                       help='store training stats in to file for display in codalab')
     files.add_argument('--embed-dir', type=str, default=EMBED_DIR,
                        help='Directory of pre-trained embedding files')
     files.add_argument('--embedding-file', type=str, choices=['word2vec', 'glove'],
@@ -142,6 +144,9 @@ def set_defaults(args):
     args.log_file = os.path.join(args.model_dir, args.model_name + '.txt')
     args.model_file = os.path.join(args.model_dir, args.model_name + '.mdl')
 
+    if args.stats_file:
+        args.stats_file = os.path.join(args.model_dir, 'stats')
+
     # Embeddings options
     if args.embedding_file:
         with open(args.embedding_file) as f:
@@ -195,11 +200,13 @@ def train(args, data_loader, model, global_stats):
     # Initialize meters + timers
     train_loss = utils.AverageMeter()
     epoch_time = utils.Timer()
+    train_loss_overall = utils.AverageMeter()
 
     # Run one epoch
     for idx, ex in enumerate(data_loader):
         loss, batch_size = model.update(ex)
         train_loss.update(loss, batch_size)
+        train_loss_overall.update(loss, batch_size)
 
         if idx % args.display_iter == 0:
             logger.info('train: Epoch = %d | iter = %d/%d | ' %
@@ -210,6 +217,7 @@ def train(args, data_loader, model, global_stats):
 
     logger.info('train: Epoch %d done. Time for epoch = %.2f (s)' %
                 (global_stats['epoch'], epoch_time.time()))
+    return train_loss_overall.avg
 
 # ------------------------------------------------------------------------------
 # Validation loops. Includes functions that
@@ -258,38 +266,49 @@ def validate(args, data_loader, model, global_stats, mode):
                 f'examples = {examples} | valid time = {eval_time.time():.2f} (s).')
     logger.info(' | '.join([f'{k}: {metrics[k]*100:.2f}%' for k in metrics]))
 
-    return {args.valid_metric: metrics[args.valid_metric]}
+    return metrics
 
 
 def train_valid_loop(train_loader, dev_loader, args, model, test_loader=None, fold=None):
     # --------------------------------------------------------------------------
     # TRAIN/VALID LOOP
     logger.info('-' * 100)
-    stats = {'timer': utils.Timer(), 'epoch': 0, 'best_valid': 0, 'best_epoch': 0}
+    stats = {'timer': utils.Timer(), 'epoch': 0, 'best_valid': 0, 'best_epoch': 0, 'fold': fold}
     start_epoch = 0
     try:
         for epoch in range(start_epoch, args.num_epochs):
             stats['epoch'] = epoch
 
             # Train
-            train(args, train_loader, model, stats)
+            loss = train(args, train_loader, model, stats)
+            stats['train_loss'] = loss
 
             # Validate train
-            validate(args, train_loader, model, stats, mode='train')
+            train_res = validate(args, train_loader, model, stats, mode='train')
+            for m in train_res:
+                stats['train_' + m] = train_res[m]
 
             # Validate dev
-            result = validate(args, dev_loader, model, stats, mode='dev')
+            val_res = validate(args, dev_loader, model, stats, mode='dev')
+            for m in train_res:
+                stats['dev_' + m] = val_res[m]
 
             # Save best valid
-            if result[args.valid_metric] > stats['best_valid']:
+            if val_res[args.valid_metric] > stats['best_valid']:
                 logger.info(
-                    colored(f'Best valid: {args.valid_metric} = {result[args.valid_metric]*100:.2f}% ', 'yellow') +
+                    colored(f'Best valid: {args.valid_metric} = {val_res[args.valid_metric]*100:.2f}% ', 'yellow') +
                     colored(f'(epoch {stats["epoch"]}, {model.updates} updates)', 'yellow'))
                 fold_info = f'.fold_{fold}' if fold is not None else ''
                 model.save(args.model_file + fold_info)
-                stats['best_valid'] = result[args.valid_metric]
+                stats['best_valid'] = val_res[args.valid_metric]
                 stats['best_epoch'] = epoch
             logger.info('-' * 100)
+
+            if args.stats_file:
+                with open(args.stats_file, 'w') as f:
+                    out_stats = stats.copy()
+                    out_stats['timer'] = out_stats['timer'].time()
+                    f.write(json.dumps(out_stats) + '\n')
 
             if epoch - stats['best_epoch'] >= args.early_stopping:
                 logger.info(colored(f'No improvement for {args.early_stopping} epochs, stop training.', 'red'))
