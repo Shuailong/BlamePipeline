@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-15 14:43:43
+# @Last Modified time: 2018-05-17 21:17:23
 
 """Train the blame tie extractor"""
 
@@ -92,6 +92,9 @@ def add_train_args(parser):
                        help='Directory of pre-trained embedding files')
     files.add_argument('--embedding-file', type=str, choices=['word2vec', 'glove'],
                        default=None, help='Space-separated pretrained embeddings file')
+    files.add_argument('--valid-size', type=float, default=0.1,
+                       help='validation set ratio')
+
     # General
     general = parser.add_argument_group('General')
     general.add_argument('--display-iter', type=int, default=25,
@@ -269,7 +272,7 @@ def validate(args, data_loader, model, global_stats, mode):
     return metrics
 
 
-def train_valid_loop(train_loader, dev_loader, args, model, test_loader=None, fold=None):
+def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=None):
     # --------------------------------------------------------------------------
     # TRAIN/VALID LOOP
     logger.info('-' * 100)
@@ -308,6 +311,8 @@ def train_valid_loop(train_loader, dev_loader, args, model, test_loader=None, fo
                 with open(args.stats_file, 'w') as f:
                     out_stats = stats.copy()
                     out_stats['timer'] = out_stats['timer'].time()
+                    if not fold:
+                        del out_stats['fold']
                     f.write(json.dumps(out_stats) + '\n')
 
             if epoch - stats['best_epoch'] >= args.early_stopping:
@@ -321,10 +326,11 @@ def train_valid_loop(train_loader, dev_loader, args, model, test_loader=None, fo
     device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
     model.to(device)
     stats['epoch'] = stats['best_epoch']
-    if test_loader:
-        test_result = validate(args, test_loader, model, stats, mode='test')
+    if fold:
+        mode = f'fold {fold} test'
     else:
-        test_result = validate(args, dev_loader, model, stats, mode=f'cv-{fold}')
+        mode = 'test'
+    test_result = validate(args, test_loader, model, stats, mode=mode)
     return test_result
 
 
@@ -385,7 +391,7 @@ def main(args):
         model = initialize_model(train_exs, dev_exs, test_exs)
         train_loader, dev_loader, test_loader = utils.split_loader(train_exs, test_exs, args, model,
                                                                    dev_exs=dev_exs)
-        result = train_valid_loop(train_loader, dev_loader, args, model, test_loader=test_loader)[args.valid_metric]
+        result = train_valid_loop(train_loader, dev_loader, test_loader, args, model)[args.valid_metric]
         logger.info('-' * 100)
         logger.info(f'Test {args.valid_metric}: {result*100:.2f}%')
     else:
@@ -399,17 +405,19 @@ def main(args):
             fold_info = f'for fold {fold}' if fold is not None else ''
             logger.info(colored(f'Starting training {fold_info}...', 'blue'))
             model = initialize_model(train_exs, dev_exs, test_exs)
-            train_loader, dev_loader = utils.split_loader_cv(
+            train_loader, dev_loader, test_loader = utils.split_loader_cv(
                 train_exs, args, model, fold_samples[fold], weighted=args.weighted_sampling)
-            result = train_valid_loop(train_loader, dev_loader, args, model, fold=fold)
+            result = train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=fold)
             results.append(result[args.valid_metric])
             if args.debug:
                 # DEBUG
                 logger.debug(colored('DEBUG: Run for 1 folds. Stop.', 'red'))
                 break
         result = np.mean(results).item()
+        std = np.std(results).item()
         logger.info('-' * 100)
-        logger.info(f'CV {args.valid_metric}: {result*100:.2f}%')
+        logger.info(f'10 fold cross validation test {args.valid_metric}s: {results}')
+        logger.info(f'Averaged test {args.valid_metric}: {result*100:.2f}±{std*100:.2f}%')
 
 
 if __name__ == '__main__':

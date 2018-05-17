@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 11:03:51
+# @Last Modified time: 2018-05-17 21:06:39
 """Blame Extractor utilities."""
 
 import json
@@ -60,7 +60,7 @@ def split_loader(train_exs, test_exs, args, model, dev_exs=None):
             collate_fn=vector.batchify,
             pin_memory=args.cuda)
     else:
-        dev_size = int(train_size * 0.1)
+        dev_size = int(train_size * args.valid_size)
         train_dev_idxs = list(range(train_size))
         random.shuffle(train_dev_idxs)
         dev_idxs = train_dev_idxs[-dev_size:]
@@ -85,18 +85,24 @@ def split_loader(train_exs, test_exs, args, model, dev_exs=None):
     return train_loader, dev_loader, test_loader
 
 
-def split_loader_cv(train_exs, args, model, dev_idxs, weighted=False):
+def split_loader_cv(train_exs, args, model, test_idxs, weighted=False):
     train_dataset = BlameTieDataset(train_exs, model)
-    train_idxs = set(range(len(train_dataset))) - set(dev_idxs)
-    train_idxs, dev_idxs = sorted(train_idxs), sorted(dev_idxs)
-    if weighted:
-        label_counts = Counter((d['label'] for d in train_exs))
-        weights = [1 / label_counts[train_exs[idx]['label']] for idx in train_idxs]
-        num_samples = min(label_counts.values()) * 2
-        train_sampler = SubsetWeightedRandomSampler(train_idxs, weights, num_samples=num_samples)
-    else:
-        train_sampler = torch.utils.data.sampler.SubsetRandomSampler(train_idxs)
+    train_idxs = list(set(range(len(train_dataset))) - set(test_idxs))
+    random.shuffle(train_idxs)
+    train_idxs_ = train_idxs[:int(len(train_idxs) * (1 - args.valid_size))]
+    dev_idxs = train_idxs[int(len(train_idxs) * (1 - args.valid_size)):]
+
     dev_sampler = torch.utils.data.sampler.SubsetRandomSampler(dev_idxs)
+    test_sampler = torch.utils.data.sampler.SubsetRandomSampler(test_idxs)
+
+    if weighted:
+        label_counts = Counter((train_exs[idx]['label'] for idx in train_idxs_))
+        weights = [1 / label_counts[train_exs[idx]['label']] for idx in train_idxs_]
+        num_samples = min(label_counts.values()) * 2
+        train_sampler = SubsetWeightedRandomSampler(train_idxs_, weights, num_samples=num_samples)
+    else:
+        train_sampler = torch.utils.data.sampler.SubsetRandomSampler(train_idxs_)
+
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=args.batch_size,
@@ -111,7 +117,14 @@ def split_loader_cv(train_exs, args, model, dev_idxs, weighted=False):
         num_workers=args.data_workers,
         collate_fn=vector.batchify,
         pin_memory=args.cuda)
-    return train_loader, dev_loader
+    test_loader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size=args.test_batch_size,
+        sampler=test_sampler,
+        num_workers=args.data_workers,
+        collate_fn=vector.batchify,
+        pin_memory=args.cuda)
+    return train_loader, dev_loader, test_loader
 
 # ------------------------------------------------------------------------------
 # Data loading
