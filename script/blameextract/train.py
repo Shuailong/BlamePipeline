@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-17 21:17:23
+# @Last Modified time: 2018-05-18 00:28:31
 
 """Train the blame tie extractor"""
 
@@ -311,7 +311,7 @@ def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=No
                 with open(args.stats_file, 'w') as f:
                     out_stats = stats.copy()
                     out_stats['timer'] = out_stats['timer'].time()
-                    if not fold:
+                    if fold is None:
                         del out_stats['fold']
                     f.write(json.dumps(out_stats) + '\n')
 
