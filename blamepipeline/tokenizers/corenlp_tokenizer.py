@@ -33,9 +33,10 @@ class CoreNLPTokenizer(Tokenizer):
 
     def _launch(self):
         """Start the CoreNLP jar with pexpect."""
-        annotators = ','.join(['tokenize', 'ssplit'])
+        annotators = ['tokenize', 'ssplit']
         if 'ner' in self.annotators:
-            annotators.append('ner')
+            annotators.extend(['pos', 'lemma', 'ner'])
+        annotators = ','.join(annotators)
         options = ','.join(['untokenizable=noneDelete',
                             'invertible=true',
                             'splitHyphenated=true'])
@@ -99,10 +100,17 @@ class CoreNLPTokenizer(Tokenizer):
         tokens = [[t for t in s['tokens']] for s in output['sentences']]
         for sent_tokens in tokens:
             sent = []
-            for token in sent_tokens:
+            for i in range(len(sent_tokens)):
+                # Get whitespace
+                start_ws = sent_tokens[i]['characterOffsetBegin']
+                if i + 1 < len(sent_tokens):
+                    end_ws = sent_tokens[i + 1]['characterOffsetBegin']
+                else:
+                    end_ws = sent_tokens[i]['characterOffsetEnd']
                 sent.append((
-                    self._convert(token['word']),
-                    token.get('ner', None)
+                    self._convert(sent_tokens[i]['word']),
+                    text[start_ws: end_ws],
+                    sent_tokens[i].get('ner', None)
                 ))
             data.append(sent)
         return Tokens(data, self.annotators)

@@ -2,15 +2,20 @@
 
 '''
 Load raw data, preprocess and save to file.
+
+1. Group blame ties from the same article
+2. Extract entities in an article
+3. Tokenize entities and article contents
+
 '''
 
 import argparse
 import os
 import json
-import re
+# import re
 from collections import defaultdict
-from collections import Counter
-
+# from collections import Counter
+from termcolor import colored
 from tqdm import tqdm
 
 from blamepipeline import DATA_DIR
@@ -19,6 +24,31 @@ from blamepipeline.preprocess.match_entity_article import filter_data
 from blamepipeline.tokenizers import CoreNLPTokenizer
 
 DATASET = os.path.join(DATA_DIR, 'datasets')
+
+
+def contains(entity_toks, article_toks):
+    entity_toks_ = entity_toks.copy()
+    entity_toks_[-1] += '.'
+    for s in article_toks:
+        for i in range(len(s) - len(entity_toks) + 1):
+            if s[i: i + len(entity_toks)] == entity_toks:
+                return True
+            elif s[i: i + len(entity_toks)] == entity_toks_:
+                return True
+    return False
+
+
+def tokenize_entity(tokenizer, entity):
+    '''
+    Tokenize and clean the entity.
+    entitt: str
+    '''
+    # tokenize
+    entity = tuple(t for s in tokenizer.tokenize(entity).words() for t in s)
+    # clean
+    entity = entity[:-1] if entity[-1] == '.' else entity
+    entity = entity[1:] if entity[0] == '--' else entity
+    return entity
 
 
 def main(args):
@@ -38,7 +68,7 @@ def main(args):
         print('{} valid pairs.'.format(len(valid_pairs)))
         data += valid_pairs
     print(f'{len(data)} valid pairs in total.')
-    tokenizer = CoreNLPTokenizer()
+    tokenizer = CoreNLPTokenizer(annotators={'ner'})
     dataset_file = os.path.join(DATASET, 'blame', 'dataset.json')
 
     if not args.cluster_article:
@@ -59,86 +89,47 @@ def main(args):
             tie = d['source'], d['target'], d['claim']
             key = d['title'], d['date']
             if tie not in articles_tie[key]:
-                articles_tie[key].append(tie)
+                articles_tie[key].append({'source': d['source'], 'target': d['target'], 'claim': d['claim']})
             if key not in articles_content:
                 articles_content[key] = d['content']
         print('-' * 100)
         print(f'{len(data)} valid pairs in {len(articles_tie)} articles.')
 
-        # in one article, if one entity is part of another entity, use another entity as this entity
-        for key in articles_tie:
-            ents = {e for (s, t, _) in articles_tie[key] for e in (s, t)}
-            for i, (s, t, c) in enumerate(articles_tie[key]):
-                for e in ents:
-                    if s in e and s != e:
-                        articles_tie[key][i] = e, t, c
-                        break
-                    if t in e and t != e:
-                        articles_tie[key][i] = s, e, c
-                        break
-        # use entity id to represent an annotated entity
-        if args.entity_anonymize:
-            ents = [e for key in articles_tie for (s, t, _) in articles_tie[key] for e in (s, t)]
-            entity_count = Counter(ents)
-            entity_dict = {}
-            entity_file = os.path.join(DATASET, 'blame', 'entity.json')
-            with open(entity_file, 'w') as f:
-                for idx, (ent, freq) in enumerate(entity_count.most_common()):
-                    ent_id = f'ENTITYID_{str(idx)}'
-                    d = {'idx': idx,
-                         'entity': ent,
-                         'freq': freq,
-                         'id': ent_id,
-                         }
-                    entity_dict[ent] = d
-                    f.write(json.dumps(d) + '\n')
-            for key in articles_tie:
-                for i, (s, t, c) in enumerate(articles_tie[key]):
-                    articles_tie[key][i] = entity_dict[s]['id'], entity_dict[t]['id'], c
-                    articles_content[key] = articles_content[key].replace(s, entity_dict[s]['id'])
-                    articles_content[key] = articles_content[key].replace(t, entity_dict[t]['id'])
-
         # tokenize
+        article_ents = {}
         if args.tokenize:
             # tokenize article
             for key in tqdm(articles_content, total=len(articles_content), desc='tokenize'):
-                articles_content[key] = tokenizer.tokenize(articles_content[key]).words(uncased=args.uncased)
-                # fix entity tokenization bugs
-                for si, s in enumerate(articles_content[key]):
-                    ss = []
-                    for wi, w in enumerate(s):
-                        res = re.match(r'(.*)(entityid_\d+)(.*)', w)
-                        if res:
-                            leftcontext, e, rightcontext = res.group(1), res.group(2), res.group(3)
-                            if leftcontext:
-                                resl = re.match(r'(.*)(entityid_\d+)(.*)', leftcontext)
-                                if resl:
-                                    leftcontextl, el, rightcontextl = resl.group(1), resl.group(2), resl.group(3)
-                                    if leftcontextl:
-                                        ss.append(leftcontextl)
-                                    ss.append(el)
-                                    if rightcontextl:
-                                        ss.append(rightcontextl)
-                                ss.append(leftcontext)
-                            ss.append(e)
-                            if rightcontext:
-                                ss.append(rightcontext)
-                        else:
-                            ss.append(w)
-                    articles_content[key][si] = ss
-            # tokenize claim
-            for key in articles_tie:
-                for i, (s, t, c) in enumerate(articles_tie[key]):
-                    if args.uncased:
-                        s, t = s.lower(), t.lower()
-                    if c:
-                        c = tokenizer.tokenize(c).words(uncased=args.uncased)
-                    articles_tie[key][i] = {'source': s, 'target': t, 'claim': c}
+                # for each article
+                # tokenize content
+                tokenized = tokenizer.tokenize(articles_content[key])
+                articles_content[key] = tokenized.words(uncased=args.uncased)
+                # automatically generated entities
+                ner_entities = {name for name, tag in tokenized.entity_groups()
+                                if tag in {'ORGANIZATION', 'PERSON'} and len(name) >= 2}
+                # annotated entities
+                anno_entities = {e for d in articles_tie[key] for e in (d['source'], d['target'])}
+                # toknenize all_entities
+                all_entities = {tokenize_entity(tokenizer, e) for e in ner_entities | anno_entities}
+
+                for e in all_entities:
+                    assert contains(list(e), articles_content[key]), colored(f'{e} not in {key}!', 'red')
+                # combine entities
+                article_ents[key] = list(all_entities)
+                # tokenize blame tie entities
+                articles_tie[key] = [{'source': tokenize_entity(tokenizer, d['source']),
+                                      'target': tokenize_entity(tokenizer, d['target']),
+                                      'claim': d['claim']}
+                                     for d in articles_tie[key]]
         # write into file
         with open(dataset_file, 'w') as f:
             for key in articles_tie:
                 title, date = key
-                d = {'title': title, 'date': date, 'pairs': articles_tie[key], 'content': articles_content[key]}
+                d = {'title': title,
+                     'date': date,
+                     'pairs': articles_tie[key],
+                     'entities': article_ents[key],
+                     'content': articles_content[key]}
                 f.write(json.dumps(d) + '\n')
         print(f'Dataset saved to {dataset_file}')
 
@@ -151,13 +142,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Make training data')
     parser.register('type', 'bool', str2bool)
     parser.add_argument('--source', type=str, default='all', choices=['nyt', 'wsj', 'usa', 'all'])
-    parser.add_argument('--uncased', type='bool', default=True)
+    parser.add_argument('--uncased', type='bool', default=False)
     parser.add_argument('--tokenize', type='bool', default=True)
     parser.add_argument('--ignore-claim', type='bool', default=True,
                         help='ignore existence of claim when filtering data entries.')
     parser.add_argument('--cluster-article', type='bool', default=True,
                         help='cluster blame ties in the same articles')
-    parser.add_argument('--entity-anonymize', type='bool', default=True,
+    parser.add_argument('--entity-anonymize', type='bool', default=False,
                         help='use entity id to represent entity name in claim and article content')
     # others
     parser.add_argument('--tqdm', type='bool', default=True)

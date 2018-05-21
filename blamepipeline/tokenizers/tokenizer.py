@@ -12,7 +12,8 @@ import copy
 class Tokens(object):
     """A class to represent a list of tokenized text."""
     TEXT = 0
-    NER = 1
+    TEXT_WS = 1
+    NER = 2
 
     def __init__(self, data, annotators, opts=None):
         self.data = data
@@ -23,11 +24,15 @@ class Tokens(object):
         """The number of tokens."""
         return len(self.data)
 
-    def slice(self, i=None, j=None):
+    def slice(self, sent_no=None, i=None, j=None):
         """Return a view of the list of tokens from [i, j)."""
         new_tokens = copy.copy(self)
-        new_tokens.data = [t for s in self.data for t in s][i: j]
+        new_tokens.data = self.data[sent_no][i: j]
         return new_tokens
+
+    def untokenize(self):
+        """Returns the original text (with whitespace reinserted)."""
+        return ''.join([t[self.TEXT_WS] for t in self.data]).strip()
 
     def words(self, uncased=False):
         """Returns a list of the text of each token
@@ -46,7 +51,7 @@ class Tokens(object):
         """
         if 'ner' not in self.annotators:
             return None
-        return [t[self.NER] for s in self.data for t in s]
+        return [[t[self.NER] for t in s] for s in self.data]
 
     def entity_groups(self):
         """Group consecutive entity tokens with the same NER tag."""
@@ -55,18 +60,19 @@ class Tokens(object):
             return None
         non_ent = self.opts.get('non_ent', 'O')
         groups = []
-        idx = 0
-        while idx < len(entities):
-            ner_tag = entities[idx]
-            # Check for entity tag
-            if ner_tag != non_ent:
-                # Chomp the sequence
-                start = idx
-                while (idx < len(entities) and entities[idx] == ner_tag):
+        for sent_no, ents in enumerate(entities):
+            idx = 0
+            while idx < len(ents):
+                ner_tag = ents[idx]
+                # Check for entity tag
+                if ner_tag != non_ent:
+                    # Chomp the sequence
+                    start = idx
+                    while (idx < len(ents) and ents[idx] == ner_tag):
+                        idx += 1
+                    groups.append((self.slice(sent_no, start, idx).untokenize(), ner_tag))
+                else:
                     idx += 1
-                groups.append((self.slice(start, idx).untokenize(), ner_tag))
-            else:
-                idx += 1
         return groups
 
 
