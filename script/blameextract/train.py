@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-18 00:28:31
+# @Last Modified time: 2018-05-21 21:53:39
 
 """Train the blame tie extractor"""
 
@@ -80,7 +80,7 @@ def add_train_args(parser):
                        help='Unique model identifier (.mdl, .txt, .checkpoint)')
     files.add_argument('--data-dir', type=str, default=DATA_DIR,
                        help='Directory of training/validation data')
-    files.add_argument('--train-file', type=str, default='blame/samples.json',
+    files.add_argument('--train-file', type=str, default='blame/samples-directed.json',
                        help='train file')
     files.add_argument('--dev-file', type=str, default=None,
                        help='dev file')
@@ -417,7 +417,7 @@ def main(args):
         std = np.std(results).item()
         logger.info('-' * 100)
         logger.info(f'10 fold cross validation test {args.valid_metric}s: {results}')
-        logger.info(f'Averaged test {args.valid_metric}: {result*100:.2f}±{std*100:.2f}%')
+        logger.info('Averaged test ' + colored(f'{args.valid_metric}: {result*100:.2f}±{std*100:.2f}%', 'green'))
 
 
 if __name__ == '__main__':

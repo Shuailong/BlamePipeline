@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-12 00:41:59
+# @Last Modified time: 2018-05-21 21:57:54
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -86,7 +86,7 @@ def add_model_args(parser):
                        help='Keep word embeddings fixed (use pretrained)')
     optim.add_argument('--rnn-padding', type='bool', default=False,
                        help='Explicitly account for padding in RNN encoding')
-    optim.add_argument('--weighted-sampling', type='bool', default=False,
+    optim.add_argument('--weighted-sampling', type='bool', default=True,
                        help='Weighted sampling during training')
 
 
