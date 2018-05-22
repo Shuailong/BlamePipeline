@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-17 21:06:39
+# @Last Modified time: 2018-05-22 00:19:46
 """Blame Extractor utilities."""
 
 import json
@@ -147,25 +147,27 @@ def load_data(filename):
 # ------------------------------------------------------------------------------
 
 
-def load_words(args, examples):
+def load_words(args, examples, cutoff=1):
     """Iterate and index all the words in examples (documents + questions)."""
 
     words = Counter()
     for ex in examples:
         for s in ex['sents']:
             for w in s:
+                if args.uncased:
+                    w = w.lower()
                 w = Dictionary.normalize(w)
                 words[w] += 1
-    words = (w for w, _ in words.most_common())
+    words = (w for w, f in words.most_common() if f > cutoff)
     return words
 
 
-def build_word_dict(args, examples):
+def build_word_dict(args, examples, cutoff=1):
     """Return a dictionary from sentence words in
     provided examples.
     """
     word_dict = Dictionary()
-    for w in load_words(args, examples):
+    for w in load_words(args, examples, cutoff=cutoff):
         word_dict.add(w)
     return word_dict
 

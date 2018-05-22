@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:42:04
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-11 16:54:35
+# @Last Modified time: 2018-05-22 12:21:01
 """Implementation of the Blame Extractor Class."""
 
 import torch
@@ -48,7 +48,20 @@ class LSTMContextClassifier(nn.Module):
         if args.add_self_attn:
             self.self_attn = layers.SelfAttn(args)
             feature_size += 2 * out_hidden_size
-        self.linear = nn.Linear(feature_size, 2)
+        if args.feature_size > 0:
+            self.condense_feature = nn.Linear(feature_size, args.feature_size)
+            self.linear = nn.Linear(args.feature_size, 2)
+        else:
+            self.linear = nn.Linear(feature_size, 2)
+
+        if args.add_elmo:
+            raise NotImplementedError('Allennlp\' ELMO does not support pytorch 0.4!')
+            from allennlp.modules.elmo import Elmo
+            options_file = ("https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/"
+                            "2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_options.json")
+            weight_file = ("https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/"
+                           "2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5")
+            self.elmo = Elmo(options_file, weight_file, 2, dropout=0)
 
     def forward(self, x, x_mask, batch_spos, batch_tpos):
         """Inputs:
@@ -69,6 +82,10 @@ class LSTMContextClassifier(nn.Module):
         if self.args.dropout_emb > 0:
             x_emb = nn.functional.dropout(x_emb, p=self.args.dropout_emb,
                                           training=self.training)
+        if self.args.add_elmo:
+            raise NotImplementedError('Allennlp\' ELMO does not support pytorch 0.4!')
+            # x_elmo = self.elmo(x)
+
         sent_hiddens = self.sent_rnn(x_emb, x_mask)
 
         batch_feats = []
@@ -95,7 +112,17 @@ class LSTMContextClassifier(nn.Module):
             batch_feats.append(torch.cat(features, dim=0))
 
         batch_feats = torch.stack(batch_feats, dim=0)
-        score = self.linear(batch_feats)
+        if self.args.dropout_feature > 0:
+            batch_feats = nn.functional.dropout(batch_feats, p=self.args.dropout_feature,
+                                                training=self.training)
+        if self.args.feature_size > 0:
+            condensed_feats = self.condense_feature(batch_feats)
+            if self.args.dropout_final > 0:
+                condensed_feats = nn.functional.dropout(condensed_feats, p=self.args.dropout_final,
+                                                        training=self.training)
+            score = self.linear(nn.functional.tanh(condensed_feats))
+        else:
+            score = self.linear(batch_feats)
         return score
 
 

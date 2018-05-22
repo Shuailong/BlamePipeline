@@ -148,8 +148,6 @@ if __name__ == '__main__':
                         help='ignore existence of claim when filtering data entries.')
     parser.add_argument('--cluster-article', type='bool', default=True,
                         help='cluster blame ties in the same articles')
-    parser.add_argument('--entity-anonymize', type='bool', default=False,
-                        help='use entity id to represent entity name in claim and article content')
     # others
     parser.add_argument('--tqdm', type='bool', default=True)
     args = parser.parse_args()

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-21 21:53:39
+# @Last Modified time: 2018-05-22 14:13:10
 
 """Train the blame tie extractor"""
 
@@ -65,7 +65,7 @@ def add_train_args(parser):
                                'operations (for reproducibility)'))
     runtime.add_argument('--num-epochs', type=int, default=30,
                          help='Train data iterations')
-    runtime.add_argument('--early-stopping', type=int, default=5,
+    runtime.add_argument('--early-stopping', type=int, default=10,
                          help='Early stopping patience')
     runtime.add_argument('--batch-size', type=int, default=50,
                          help='Batch size for training')
@@ -104,10 +104,14 @@ def add_train_args(parser):
                          default=['precision', 'recall', 'F1', 'acc'])
     general.add_argument('--valid-metric', type=str, default='F1',
                          help='The evaluation metric used for model selection')
+    general.add_argument('--uncased', type='bool', default=False,
+                         help='uncase data')
+    general.add_argument('--vocab-cutoff', type=int, default=0,
+                         help='word frequency larger than this will be in dictionary')
 
     # debug
     debug = parser.add_argument_group('Debug')
-    debug.add_argument('--debug', type='bool', default=False,
+    debug.add_argument('--debug', type='bool', default=True,
                        help='Debug mode: only run 1/10 fold.')
 
 
@@ -129,7 +133,10 @@ def set_defaults(args):
             raise IOError('No such file: %s' % args.test_file)
 
     if args.embedding_file:
-        args.embedding_file = 'w2v.googlenews.300d.txt' if args.embedding_file == 'word2vec' else 'glove.6B.300d.txt'
+        if args.embedding_file == 'word2vec':
+            args.embedding_file = 'w2v.googlenews.300d.txt'
+        else:
+            args.embedding_file = f'glove.6B.{args.embedding_dim}d.txt'
         args.embedding_file = os.path.join(args.embed_dir, args.embedding_file)
         if not os.path.isfile(args.embedding_file):
             raise IOError('No such file: %s' % args.embedding_file)
@@ -181,7 +188,7 @@ def init_from_scratch(args, train_exs, dev_exs, test_exs):
     # Build a dictionary from the data
     logger.info('-' * 100)
     logger.info('Build dictionary')
-    word_dict = utils.build_word_dict(args, train_exs + dev_exs + test_exs)
+    word_dict = utils.build_word_dict(args, train_exs + dev_exs + test_exs, cutoff=args.vocab_cutoff)
     logger.info('Num words = %d' % len(word_dict))
 
     # Initialize model
@@ -267,7 +274,10 @@ def validate(args, data_loader, model, global_stats, mode):
 
     logger.info(f'{mode} valid: Epoch = {global_stats["epoch"]} (best:{global_stats["best_epoch"]}) | ' +
                 f'examples = {examples} | valid time = {eval_time.time():.2f} (s).')
-    logger.info(' | '.join([f'{k}: {metrics[k]*100:.2f}%' for k in metrics]))
+    test_result = ' | '.join([f'{k}: {metrics[k]*100:.2f}%' for k in metrics])
+    if mode == 'test':
+        test_result = colored(test_result, 'green')
+    logger.info(test_result)
 
     return metrics
 

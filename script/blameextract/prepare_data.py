@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-21 22:03:54
+# @Last Modified time: 2018-05-22 14:02:29
 
 '''
 Within an article, merge the same entities and construct a map from entity name to entity id.
@@ -16,8 +16,10 @@ from collections import defaultdict
 import os
 import json
 import pickle  # json cannot accpet tuple key
-# from termcolor import colored
 from itertools import permutations
+from statistics import mean, stdev
+
+from termcolor import colored
 from tqdm import tqdm
 
 
@@ -119,7 +121,6 @@ def entity_merge_local(entities):
 
 
 def main(args):
-    articles, samples, pos = 0, 0, 0
     fname, ext = os.path.splitext(args.samples_file)
     if args.ignore_direction:
         args.samples_file = fname + '-undirected' + ext
@@ -131,18 +132,19 @@ def main(args):
         entity2id = entity_merge_global(args)
 
     # debug
-    all_entities_mismatch, tie_entities_mismatch, total_entities = 0, 0, 0
+    num_articles, num_samples, num_pos_samples = 0, 0, 0
+    all_entities_mismatch, tie_entities_mismatch = 0, 0
+    num_entities_dist, samples_ratio_dist = [], []
     with open(args.dataset_file) as f,\
             open(args.samples_file, 'w') as fout:
-        for line in tqdm(f, total=999, desc='generate samples'):
-            articles += 1
+        for i, line in tqdm(enumerate(f), total=999, desc='generate samples'):
             d = json.loads(line)
             content = d['content']
             pairs = {(tuple(p['source']), tuple(p['target'])) for p in d['pairs']}
             all_entities = {tuple(e) for e in d['entities']}
             if args.merge_entity == 'local':
                 entity2id = entity_merge_local(all_entities)
-            pairs_entities_ids = {(entity2id[s], entity2id[t]) for s, t in pairs}
+            pairs_entities_ids = {(entity2id[s], entity2id[t]) for s, t in pairs if entity2id[s] != entity2id[t]}
             all_entities_ids = {entity2id[e] for e in all_entities}
 
             # merge entity words in *content* into a single token, and replace by id
@@ -174,34 +176,44 @@ def main(args):
                 for e in p:
                     if e not in epos:
                         tie_entities_mismatch += 1
-            total_entities += len(all_entities)
 
-            # continue
             # # remove entities which cannot be found in article
             all_entities_ids = {e for e in all_entities_ids if e in epos}
             pairs_entities_ids = {(s, t) for s, t in pairs_entities_ids if s in epos and t in epos}
-
+            if len(pairs_entities_ids) == 0:
+                continue
             # make negative samples and select sentences
+            article_pos = 0
+            article_samples = 0
             for src, tgt in permutations(all_entities_ids, 2):
                 if not args.ignore_direction:
                     label = 1 if (src, tgt) in pairs_entities_ids else 0
                 else:
                     label = 1 if (src, tgt) in pairs_entities_ids or (tgt, src) in pairs_entities_ids else 0
                 if label == 1:
-                    pos += 1
+                    article_pos += 1
+                article_samples += 1
                 sent_idxs = {si for si, _ in epos[src] + epos[tgt]}
                 sents = [content[si] for si in sent_idxs]
                 s_pos = [(sents.index(content[si]), wi) for si, wi in epos[src]]
                 t_pos = [(sents.index(content[si]), wi) for si, wi in epos[tgt]]
                 dpos = {'src_pos': s_pos, 'tgt_pos': t_pos, 'sents': sents, 'label': label}
                 fout.write(json.dumps(dpos) + '\n')
-                samples += 1
+            assert article_pos > 0
+            num_pos_samples += article_pos
+            num_samples += article_samples
+            num_articles += 1
+            num_entities_dist.append(len(all_entities_ids))
+            samples_ratio_dist.append((article_samples - article_pos) / article_pos)
 
-    print(f'mismatched entities: {all_entities_mismatch}.')
-    print(f'mismatched blame entities: {tie_entities_mismatch}')
-    print(f'total entities: {total_entities}')
-    print(f'{articles} articles generate {samples} samples.')
-    print(f'neg / pos = {(samples - pos) / pos:.2f}, pos percentage: {pos / samples * 100:.2f}%')
+    print(colored(f'mismatched entities: {all_entities_mismatch}.', 'yellow'))
+    print(colored(f'mismatched blame entities: {tie_entities_mismatch}', 'yellow'))
+    print(f'{num_articles} articles generate {num_samples} samples.')
+    print(f'avg entities per article: {mean(num_entities_dist):.2f} ± {stdev(num_entities_dist):.2f}')
+    print(f'avg neg/pos ratio per article: {mean(samples_ratio_dist):.2f} ± {stdev(samples_ratio_dist):.2f}')
+    print(f'pos: {num_pos_samples}, neg: {num_samples-num_pos_samples}, '
+          f'neg / pos = {(num_samples-num_pos_samples)/num_pos_samples:.2f}, '
+          f'overall pos percentage: {num_pos_samples / num_samples * 100:.2f}%')
 
     if args.split:
         pass

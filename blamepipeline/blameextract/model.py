@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 15:57:09
+# @Last Modified time: 2018-05-22 02:17:09
 
 '''
 BlameExtractor Class Wrapper
@@ -60,6 +60,7 @@ class BlameExtractor(object):
                     'fixed_embedding', fixed_embedding)
             else:
                 self.network.load_state_dict(state_dict)
+        self.loss_weights = torch.tensor([1 - args.pos_weight, args.pos_weight], dtype=torch.float, device=self.device)
 
     def load_embeddings(self, words, embedding_file):
         """Load pretrained embeddings for a given list of words, if they exist.
@@ -144,7 +145,7 @@ class BlameExtractor(object):
         score = self.network(*inputs)
 
         # Compute loss and accuracies
-        loss = F.cross_entropy(score, label)
+        loss = F.cross_entropy(score, label, weight=self.loss_weights)
 
         # Clear gradients and run backward
         self.optimizer.zero_grad()
@@ -219,6 +220,7 @@ class BlameExtractor(object):
     def to(self, device):
         self.device = device
         self.network = self.network.to(device)
+        self.loss_weights = self.loss_weights.to(device)
 
     def parallelize(self):
         """Use data parallel to copy the model across several gpus.

@@ -4,17 +4,18 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 11:25:17
+# @Last Modified time: 2018-05-22 00:12:57
 """Functions for putting examples into torch format."""
 
 import torch
 
 
-def vectorize(ex, model):
+def vectorize(ex, model, uncased=False):
     """Torchify a single example."""
     word_dict = model.word_dict
     # Index words
-    sents = [torch.tensor([word_dict[w] for w in s], dtype=torch.long) for s in ex['sents']]
+    sentences = [[w.lower() for w in s] for s in ex['sents']] if uncased else ex['sents']
+    sents = [torch.tensor([word_dict[w] for w in s], dtype=torch.long) for s in sentences]
     label = ex['label']
     spos = ex['src_pos']
     tpos = ex['tgt_pos']

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 09:12:30
+# @Last Modified time: 2018-05-22 00:22:56
 
 """Data processing/loading helpers."""
 
@@ -88,15 +88,16 @@ class Dictionary(object):
 
 
 class BlameTieDataset(Dataset):
-    def __init__(self, examples, model):
+    def __init__(self, examples, model, uncased=False):
         self.model = model
         self.examples = examples
+        self.uncased = uncased
 
     def __len__(self):
         return len(self.examples)
 
     def __getitem__(self, index):
-        return vectorize(self.examples[index], self.model)
+        return vectorize(self.examples[index], self.model, uncased=self.uncased)
 
 
 # ------------------------------------------------------------------------------
@@ -105,7 +106,7 @@ class BlameTieDataset(Dataset):
 
 
 class SubsetWeightedRandomSampler(Sampler):
-    r"""Samples elements randomly from a given list of indices, without replacement.
+    """Samples elements randomly from a given list of indices, without replacement.
 
     Arguments:
         indices (list): a list of indices
