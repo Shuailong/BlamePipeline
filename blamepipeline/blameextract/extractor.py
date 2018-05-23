@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:42:04
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 22:54:53
+# @Last Modified time: 2018-05-23 17:29:17
 """Implementation of the Blame Extractor Class."""
 
 import torch
@@ -75,10 +75,10 @@ class LSTMContextClassifier(nn.Module):
             for spos, tpos in zip(batch_spos, batch_tpos):
                 for pos in spos:
                     x[tuple(pos)] = 0
-                    x_mask[tuple(pos)] = 1
+                    # x_mask[tuple(pos)] = 1
                 for pos in tpos:
                     x[tuple(pos)] = 0
-                    x_mask[tuple(pos)] = 1
+                    # x_mask[tuple(pos)] = 1
 
         x_emb = self.embedding(x)
         if self.args.dropout_emb > 0:
@@ -92,7 +92,7 @@ class LSTMContextClassifier(nn.Module):
 
         batch_feats = []
         # dist_feats = (-dist_feats).unsqueeze(-1).exp()
-        negative_idx = {i for i, dist in enumerate(dist_feats) if dist > 3}
+        # negative_idx = {i for i, dist in enumerate(dist_feats) if dist > 40}
         for batch_i, (spos, tpos) in enumerate(zip(batch_spos, batch_tpos)):
             # find entity hidden representation
             s_hids_mean = torch.stack([sent_hiddens[tuple(pos)] for pos in spos], dim=0).mean(0)
@@ -131,9 +131,9 @@ class LSTMContextClassifier(nn.Module):
             score = self.linear(nn.functional.tanh(condensed_feats))
         else:
             score = self.linear(batch_feats)
-        score = [torch.tensor([0.99, 0.01], dtype=torch.float, device=torch.device('cuda:0'))
-                 if i in negative_idx else s for i, s in enumerate(score)]
-        score = torch.stack(score, dim=0)
+        # score = [torch.tensor([0.99, 0.01], dtype=torch.float, device=torch.device('cuda:0'))
+        #          if i in negative_idx else s for i, s in enumerate(score)]
+        # score = torch.stack(score, dim=0)
         return score
 
 
