@@ -4,20 +4,27 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-14 10:53:55
+# @Last Modified time: 2018-05-22 16:14:00
 
 import argparse
 from collections import defaultdict
 import json
+import os
 from itertools import permutations
 # from termcolor import colored
 
+from blamepipeline import DATA_DIR
+
+DATASET = os.path.join(DATA_DIR, 'datasets')
+
 
 def main(args):
+    args.dataset_file = os.path.join(DATASET, args.dataset_file)
+    args.samples_file = os.path.join(DATASET, args.samples_file)
     print(args)
     articles, sampeles, pos = 0, 0, 0
-    with open(args.dataset) as f,\
-            open(args.samples, 'w') as fout:
+    with open(args.dataset_file) as f,\
+            open(args.samples_file, 'w') as fout:
         for line in f:
             articles += 1
             d = json.loads(line)
@@ -61,8 +68,8 @@ def str2bool(v):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Preprocess data for blame extractor')
     parser.register('type', 'bool', str2bool)
-    parser.add_argument('--dataset', type=str, default='data/datasets/blame/dataset.json')
-    parser.add_argument('--samples', type=str, default='data/datasets/blame/samples.json')
+    parser.add_argument('--dataset-file', type=str, default='dataset.json')
+    parser.add_argument('--samples-file', type=str, default='samples.json')
     parser.add_argument('--ignore-direction', type='bool', default=False)
     parser.set_defaults()
     args = parser.parse_args()

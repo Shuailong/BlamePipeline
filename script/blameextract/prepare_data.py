@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 14:02:29
+# @Last Modified time: 2018-05-22 20:52:20
 
 '''
 Within an article, merge the same entities and construct a map from entity name to entity id.
@@ -22,6 +22,10 @@ from statistics import mean, stdev
 from termcolor import colored
 from tqdm import tqdm
 
+from blamepipeline import DATA_DIR as DATA_ROOT
+
+DATA_DIR = os.path.join(DATA_ROOT, 'datasets')
+
 
 def entity_merge_global(args):
     '''
@@ -29,9 +33,9 @@ def entity_merge_global(args):
     entity2alias: {longest entity name(tuple) ->all alias sort by word length in decrease order (tuples)}
     entity2id: {entity name (tuple) -> longest entity name (str) }
     '''
-    entity_json_path = args.entity_dir + 'entity.json'
-    entity_txt_path = args.entity_dir + 'entity.txt'
-    entity2id_path = args.entity_dir + 'entity2id.pkl'
+    entity_json_path = os.path.join(DATA_DIR, 'entity.json')
+    entity_txt_path = os.path.join(DATA_DIR, 'entity.txt')
+    entity2id_path = os.path.join(DATA_DIR, 'entity2id.pkl')
 
     if not args.data_force and os.path.exists(entity_json_path) and\
             os.path.exists(entity_txt_path) and\
@@ -121,6 +125,8 @@ def entity_merge_local(entities):
 
 
 def main(args):
+    args.samples_file = os.path.join(DATA_DIR, args.samples_file)
+    args.dataset_file = os.path.join(DATA_DIR, args.dataset_file)
     fname, ext = os.path.splitext(args.samples_file)
     if args.ignore_direction:
         args.samples_file = fname + '-undirected' + ext
@@ -135,9 +141,12 @@ def main(args):
     num_articles, num_samples, num_pos_samples = 0, 0, 0
     all_entities_mismatch, tie_entities_mismatch = 0, 0
     num_entities_dist, samples_ratio_dist = [], []
-    with open(args.dataset_file) as f,\
-            open(args.samples_file, 'w') as fout:
-        for i, line in tqdm(enumerate(f), total=999, desc='generate samples'):
+
+    samples = []
+    with open(args.dataset_file) as f:
+        lines = sum((1 for _ in f))
+    with open(args.dataset_file) as f:
+        for line in tqdm(f, total=lines, desc='generate samples'):
             d = json.loads(line)
             content = d['content']
             pairs = {(tuple(p['source']), tuple(p['target'])) for p in d['pairs']}
@@ -183,31 +192,79 @@ def main(args):
             if len(pairs_entities_ids) == 0:
                 continue
             # make negative samples and select sentences
-            article_pos = 0
-            article_samples = 0
+            article_pos_num = 0
+            article_samples_num = 0
+            article_samples = []
             for src, tgt in permutations(all_entities_ids, 2):
                 if not args.ignore_direction:
                     label = 1 if (src, tgt) in pairs_entities_ids else 0
                 else:
                     label = 1 if (src, tgt) in pairs_entities_ids or (tgt, src) in pairs_entities_ids else 0
                 if label == 1:
-                    article_pos += 1
-                article_samples += 1
+                    article_pos_num += 1
+                article_samples_num += 1
                 sent_idxs = {si for si, _ in epos[src] + epos[tgt]}
                 sents = [content[si] for si in sent_idxs]
                 s_pos = [(sents.index(content[si]), wi) for si, wi in epos[src]]
                 t_pos = [(sents.index(content[si]), wi) for si, wi in epos[tgt]]
-                dpos = {'src_pos': s_pos, 'tgt_pos': t_pos, 'sents': sents, 'label': label}
-                fout.write(json.dumps(dpos) + '\n')
-            assert article_pos > 0
-            num_pos_samples += article_pos
-            num_samples += article_samples
+                sample = {'src_pos': s_pos, 'tgt_pos': t_pos,
+                          'src_pos_original': epos[src], 'tgt_pos_original': epos[tgt],
+                          'sents': sents, 'label': label}
+                article_samples.append(sample)
+            assert article_pos_num > 0
+            num_pos_samples += article_pos_num
+            num_samples += article_samples_num
             num_articles += 1
             num_entities_dist.append(len(all_entities_ids))
-            samples_ratio_dist.append((article_samples - article_pos) / article_pos)
+            samples_ratio_dist.append((article_samples_num - article_pos_num) / article_pos_num)
+            samples.append(article_samples)
+
+    if args.split:
+        train_articles_num = int(num_articles * 0.8)
+        dev_articles_num = int(num_articles * 0.1)
+
+        train_articles_samples = samples[:train_articles_num]
+        dev_articles_samples = samples[train_articles_num:train_articles_num + dev_articles_num]
+        test_articles_samples = samples[train_articles_num + dev_articles_num:]
+
+        fname, ext = os.path.splitext(args.samples_file)
+        train_file = fname + '-train' + ext
+        dev_file = fname + '-dev' + ext
+        test_file = fname + '-test' + ext
+
+        train_samples_num = 0
+        with open(train_file, 'w') as f:
+            for article_sample in tqdm(train_articles_samples, total=len(train_articles_samples), desc='write train'):
+                for sample in article_sample:
+                    train_samples_num += 1
+                    f.write(json.dumps(sample) + '\n')
+        print(f'{train_samples_num} samples written to {train_file}.')
+        dev_samples_num = 0
+        with open(dev_file, 'w') as f:
+            for article_sample in tqdm(dev_articles_samples, total=len(dev_articles_samples), desc='write dev'):
+                for sample in article_sample:
+                    dev_samples_num += 1
+                    f.write(json.dumps(sample) + '\n')
+        print(f'{dev_samples_num} samples written to {dev_file}.')
+        test_samples_num = 0
+        with open(test_file, 'w') as f:
+            for article_sample in tqdm(test_articles_samples, total=len(test_articles_samples), desc='write test'):
+                for sample in article_sample:
+                    test_samples_num += 1
+                    f.write(json.dumps(sample) + '\n')
+        print(f'{test_samples_num} samples written to {test_file}.')
+    else:
+        samples_num = 0
+        with open(args.samples_file, 'w') as fout:
+            for article_sample in tqdm(samples, total=len(samples), desc='write total'):
+                for sample in article_sample:
+                    samples_num += 1
+                    fout.write(json.dumps(sample) + '\n')
+        print(f'{samples_num} samples written to {args.samples_file}.')
 
     print(colored(f'mismatched entities: {all_entities_mismatch}.', 'yellow'))
     print(colored(f'mismatched blame entities: {tie_entities_mismatch}', 'yellow'))
+
     print(f'{num_articles} articles generate {num_samples} samples.')
     print(f'avg entities per article: {mean(num_entities_dist):.2f} ± {stdev(num_entities_dist):.2f}')
     print(f'avg neg/pos ratio per article: {mean(samples_ratio_dist):.2f} ± {stdev(samples_ratio_dist):.2f}')
@@ -226,9 +283,8 @@ def str2bool(v):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Preprocess data for blame extractor')
     parser.register('type', 'bool', str2bool)
-    parser.add_argument('--dataset-file', type=str, default='data/datasets/blame/dataset.json')
-    parser.add_argument('--entity-dir', type=str, default='data/datasets/blame/')
-    parser.add_argument('--samples-file', type=str, default='data/datasets/blame/samples.json')
+    parser.add_argument('--dataset-file', type=str, default='dataset.json')
+    parser.add_argument('--samples-file', type=str, default='samples.json')
     parser.add_argument('--merge-entity', type=str, default='local',
                         help='build a merge dict locally(per article) or globally(dataset level)')
     parser.add_argument('--ignore-direction', type='bool', default=False)

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 00:19:46
+# @Last Modified time: 2018-05-22 21:18:00
 """Blame Extractor utilities."""
 
 import json
@@ -27,17 +27,10 @@ logger = logging.getLogger(__name__)
 # Train/dev split
 # ------------------------------------------------------------------------------
 
-def split_loader(train_exs, test_exs, args, model, dev_exs=None):
+def split_loader(train_exs, test_exs, args, model, dev_exs=None, weighted=False):
     train_dataset = BlameTieDataset(train_exs, model)
     train_size = len(train_dataset)
-    train_sampler = torch.utils.data.sampler.RandomSampler(train_dataset)
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        sampler=train_sampler,
-        num_workers=args.data_workers,
-        collate_fn=vector.batchify,
-        pin_memory=args.cuda)
+    train_idxs = list(range(train_size))
 
     test_dataset = BlameTieDataset(test_exs, model)
     test_sampler = torch.utils.data.sampler.SequentialSampler(test_dataset)
@@ -59,12 +52,13 @@ def split_loader(train_exs, test_exs, args, model, dev_exs=None):
             num_workers=args.data_workers,
             collate_fn=vector.batchify,
             pin_memory=args.cuda)
+        train_idxs_ = train_idxs
     else:
         dev_size = int(train_size * args.valid_size)
-        train_dev_idxs = list(range(train_size))
-        random.shuffle(train_dev_idxs)
-        dev_idxs = train_dev_idxs[-dev_size:]
-        train_idxs = train_dev_idxs[:train_size - dev_size]
+        random.shuffle(train_idxs)
+        dev_idxs = train_idxs[-dev_size:]
+        dev_exs = [train_exs[i] for i in dev_idxs]
+        train_idxs_ = train_idxs[:train_size - dev_size]
         dev_sampler = torch.utils.data.sampler.SubsetRandomSampler(dev_idxs)
         dev_loader = torch.utils.data.DataLoader(
             train_dataset,
@@ -73,14 +67,27 @@ def split_loader(train_exs, test_exs, args, model, dev_exs=None):
             num_workers=args.data_workers,
             collate_fn=vector.batchify,
             pin_memory=args.cuda)
-        train_sampler = torch.utils.data.sampler.SubsetRandomSampler(train_idxs)
-        train_loader = torch.utils.data.DataLoader(
-            train_dataset,
-            batch_size=args.batch_size,
-            sampler=train_sampler,
-            num_workers=args.data_workers,
-            collate_fn=vector.batchify,
-            pin_memory=args.cuda)
+    train_exs_ = [train_exs[i] for i in train_idxs_]
+
+    if weighted:
+        label_counts = Counter((train_exs[idx]['label'] for idx in train_idxs_))
+        weights = [1 / label_counts[train_exs[idx]['label']] for idx in train_idxs_]
+        num_samples = min(label_counts.values()) * 2
+        train_sampler = SubsetWeightedRandomSampler(train_idxs_, weights, num_samples=num_samples)
+    else:
+        train_sampler = torch.utils.data.sampler.SubsetRandomSampler(train_idxs_)
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        sampler=train_sampler,
+        num_workers=args.data_workers,
+        collate_fn=vector.batchify,
+        pin_memory=args.cuda)
+
+    if args.debug:
+        # dev and test vocabulary coverage in train
+        vocab_coverage(train_exs_, dev_exs, test_exs)
 
     return train_loader, dev_loader, test_loader
 
@@ -124,7 +131,29 @@ def split_loader_cv(train_exs, args, model, test_idxs, weighted=False):
         num_workers=args.data_workers,
         collate_fn=vector.batchify,
         pin_memory=args.cuda)
+
+    if args.debug:
+        # dev and test vocabulary coverage in train
+        train_exs_ = [train_exs[i] for i in train_idxs_]
+        dev_exs = [train_exs[i] for i in dev_idxs]
+        test_exs = [train_exs[i] for i in test_idxs]
+        vocab_coverage(train_exs_, dev_exs, test_exs)
+
     return train_loader, dev_loader, test_loader
+
+
+def vocab_coverage(args, model, train_exs, dev_exs, test_exs):
+    train_vocab = set(load_words(args, train_exs, cutoff=0))
+    dev_vocab = set(load_words(args, dev_exs, cutoff=0))
+    test_vocab = set(load_words(args, test_exs, cutoff=0))
+    words = set(model.word_dict.tokens())
+    dev_coverage = len(dev_vocab & train_vocab & words) / len(dev_vocab)
+    test_coverage = len(test_vocab & train_vocab & words) / len(test_vocab)
+    logger.debug(f'train/dev/test samples: {len(train_exs)}/{len(dev_exs)}/{len(test_exs)}')
+    logger.debug(f'train/dev/test vocab: {len(train_vocab)}/{len(dev_vocab)}/{len(test_vocab)}')
+    logger.debug(f'dev vocab coverage: {dev_coverage*100:.2f}%')
+    logger.debug(f'test vocab coverage: {test_coverage*100:.2f}%')
+
 
 # ------------------------------------------------------------------------------
 # Data loading

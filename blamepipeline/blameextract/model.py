@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 02:17:09
+# @Last Modified time: 2018-05-22 20:32:13
 
 '''
 BlameExtractor Class Wrapper
@@ -52,15 +52,8 @@ class BlameExtractor(object):
             raise RuntimeError(f'Unsupported model: {args.model_type}')
 
         if state_dict:
-            # Load buffer separately
-            if 'fixed_embedding' in state_dict:
-                fixed_embedding = state_dict.pop('fixed_embedding')
-                self.network.load_state_dict(state_dict)
-                self.network.register_buffer(
-                    'fixed_embedding', fixed_embedding)
-            else:
-                self.network.load_state_dict(state_dict)
-        self.loss_weights = torch.tensor([1 - args.pos_weight, args.pos_weight], dtype=torch.float, device=self.device)
+            self.network.load_state_dict(state_dict)
+        self.loss_weights = torch.tensor([1 - args.pos_weight, args.pos_weight])
 
     def load_embeddings(self, words, embedding_file):
         """Load pretrained embeddings for a given list of words, if they exist.

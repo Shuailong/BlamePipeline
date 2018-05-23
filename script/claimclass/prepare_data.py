@@ -66,7 +66,7 @@ def stat(sents):
 
 
 def main(args):
-    dataset_file = os.path.join(DATASET, 'blame', args.dataset)
+    dataset_file = os.path.join(DATASET, args.dataset)
     logger.info(f'loading data from {dataset_file}')
     data = []
     with open(dataset_file, 'r') as f:
@@ -85,7 +85,7 @@ def main(args):
     pos = sum(labels)
     neg = len(labels) - pos
     logger.info(f'pos: {pos}, neg: {neg}, neg/pos = {neg/pos:.1f}')
-    sent_file = os.path.join(DATASET, 'blame', args.sentences)
+    sent_file = os.path.join(DATASET, args.sentences)
     logger.info(f'write samples to {sent_file}')
 
     with open(sent_file, 'w') as f:

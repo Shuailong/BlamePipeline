@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 02:50:21
+# @Last Modified time: 2018-05-22 22:37:51
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 MODEL_ARCHITECTURE = {
     'model_type', 'embedding_dim', 'hidden_size', 'layers',
     'rnn_type', 'concat_rnn_layers', 'kernel_sizes', 'include_emb',
-    'add_self_attn', 'unk_entity', 'feature_size', 'add_elmo'
+    'add_self_attn', 'unk_entity', 'feature_size', 'add_elmo', 'add_sdf'
 }
 
 # Index of arguments concerning the model optimizer/training
@@ -46,6 +46,8 @@ def add_model_args(parser):
                        help='Add self attention layer to LSTM output')
     model.add_argument('--add-elmo', type='bool', default=False,
                        help='add allennlp ELMO implementation and weights')
+    model.add_argument('--add-sdf', type='bool', default=False,
+                       help='add sentence distance feature')
     model.add_argument('--unk-entity', type='bool', default=False,
                        help='Mask entity work by PAD symbol')
     model.add_argument('--embedding-dim', type=int, default=300,

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 14:13:10
+# @Last Modified time: 2018-05-22 21:24:33
 
 """Train the blame tie extractor"""
 
@@ -80,11 +80,11 @@ def add_train_args(parser):
                        help='Unique model identifier (.mdl, .txt, .checkpoint)')
     files.add_argument('--data-dir', type=str, default=DATA_DIR,
                        help='Directory of training/validation data')
-    files.add_argument('--train-file', type=str, default='blame/samples-directed.json',
+    files.add_argument('--train-file', type=str, default='samples-directed-train.json',
                        help='train file')
-    files.add_argument('--dev-file', type=str, default=None,
+    files.add_argument('--dev-file', type=str, default='samples-directed-dev.json',
                        help='dev file')
-    files.add_argument('--test-file', type=str, default=None,
+    files.add_argument('--test-file', type=str, default='samples-directed-test.json',
                        help='test file')
     files.add_argument('--stats-file', type='bool', default=False,
                        help='store training stats in to file for display in codalab')
@@ -111,7 +111,7 @@ def add_train_args(parser):
 
     # debug
     debug = parser.add_argument_group('Debug')
-    debug.add_argument('--debug', type='bool', default=True,
+    debug.add_argument('--debug', type='bool', default=False,
                        help='Debug mode: only run 1/10 fold.')
 
 
@@ -336,7 +336,7 @@ def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=No
     device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
     model.to(device)
     stats['epoch'] = stats['best_epoch']
-    if fold:
+    if fold is not None:
         mode = f'fold {fold} test'
     else:
         mode = 'test'
@@ -400,7 +400,7 @@ def main(args):
     if args.test_file:
         model = initialize_model(train_exs, dev_exs, test_exs)
         train_loader, dev_loader, test_loader = utils.split_loader(train_exs, test_exs, args, model,
-                                                                   dev_exs=dev_exs)
+                                                                   dev_exs=dev_exs, weighted=args.weighted_sampling)
         result = train_valid_loop(train_loader, dev_loader, test_loader, args, model)[args.valid_metric]
         logger.info('-' * 100)
         logger.info(f'Test {args.valid_metric}: {result*100:.2f}%')

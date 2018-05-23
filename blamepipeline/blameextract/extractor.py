@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:42:04
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 12:21:01
+# @Last Modified time: 2018-05-22 22:54:53
 """Implementation of the Blame Extractor Class."""
 
 import torch
@@ -48,6 +48,8 @@ class LSTMContextClassifier(nn.Module):
         if args.add_self_attn:
             self.self_attn = layers.SelfAttn(args)
             feature_size += 2 * out_hidden_size
+        if args.add_sdf:
+            feature_size += 1
         if args.feature_size > 0:
             self.condense_feature = nn.Linear(feature_size, args.feature_size)
             self.linear = nn.Linear(args.feature_size, 2)
@@ -63,7 +65,7 @@ class LSTMContextClassifier(nn.Module):
                            "2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5")
             self.elmo = Elmo(options_file, weight_file, 2, dropout=0)
 
-    def forward(self, x, x_mask, batch_spos, batch_tpos):
+    def forward(self, x, x_mask, batch_spos, batch_tpos, dist_feats):
         """Inputs:
         x = sentence word indices             [sents * len]
         x_mask = sentence padding mask        [sents * len]
@@ -89,11 +91,17 @@ class LSTMContextClassifier(nn.Module):
         sent_hiddens = self.sent_rnn(x_emb, x_mask)
 
         batch_feats = []
+        # dist_feats = (-dist_feats).unsqueeze(-1).exp()
+        negative_idx = {i for i, dist in enumerate(dist_feats) if dist > 3}
         for batch_i, (spos, tpos) in enumerate(zip(batch_spos, batch_tpos)):
             # find entity hidden representation
             s_hids_mean = torch.stack([sent_hiddens[tuple(pos)] for pos in spos], dim=0).mean(0)
             t_hids_mean = torch.stack([sent_hiddens[tuple(pos)] for pos in tpos], dim=0).mean(0)
             features = [s_hids_mean, t_hids_mean]
+            # add sentence distence feature
+            if self.args.add_sdf:
+                features.append(dist_feats[batch_i])
+
             if self.args.include_emb:
                 # find embeddings
                 s_emb, t_emb = x_emb[tuple(spos[0])], x_emb[tuple(tpos[0])]
@@ -123,6 +131,9 @@ class LSTMContextClassifier(nn.Module):
             score = self.linear(nn.functional.tanh(condensed_feats))
         else:
             score = self.linear(batch_feats)
+        score = [torch.tensor([0.99, 0.01], dtype=torch.float, device=torch.device('cuda:0'))
+                 if i in negative_idx else s for i, s in enumerate(score)]
+        score = torch.stack(score, dim=0)
         return score
 
 

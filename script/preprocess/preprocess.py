@@ -69,7 +69,7 @@ def main(args):
         data += valid_pairs
     print(f'{len(data)} valid pairs in total.')
     tokenizer = CoreNLPTokenizer(annotators={'ner'})
-    dataset_file = os.path.join(DATASET, 'blame', 'dataset.json')
+    dataset_file = os.path.join(DATASET, 'dataset.json')
 
     if not args.cluster_article:
         # don't need to cluster by article. use when training claim centence classification
