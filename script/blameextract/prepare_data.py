@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 20:52:20
+# @Last Modified time: 2018-05-23 20:35:38
 
 '''
 Within an article, merge the same entities and construct a map from entity name to entity id.
@@ -21,6 +21,8 @@ from statistics import mean, stdev
 
 from termcolor import colored
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from blamepipeline import DATA_DIR as DATA_ROOT
 
@@ -140,7 +142,7 @@ def main(args):
     # debug
     num_articles, num_samples, num_pos_samples = 0, 0, 0
     all_entities_mismatch, tie_entities_mismatch = 0, 0
-    num_entities_dist, samples_ratio_dist = [], []
+    num_entities_dist, samples_ratio_dist, blame_tie_dist = [], [], []
 
     samples = []
     with open(args.dataset_file) as f:
@@ -149,12 +151,14 @@ def main(args):
         for line in tqdm(f, total=lines, desc='generate samples'):
             d = json.loads(line)
             content = d['content']
-            pairs = {(tuple(p['source']), tuple(p['target'])) for p in d['pairs']}
-            all_entities = {tuple(e) for e in d['entities']}
+            pairs = sorted({(tuple(p['source']), tuple(p['target'])) for p in d['pairs']})
+            # all_entities = sorted({tuple(e) for e in d['entities']})
+            all_entities = sorted({e for p in pairs for e in p})
             if args.merge_entity == 'local':
                 entity2id = entity_merge_local(all_entities)
-            pairs_entities_ids = {(entity2id[s], entity2id[t]) for s, t in pairs if entity2id[s] != entity2id[t]}
-            all_entities_ids = {entity2id[e] for e in all_entities}
+            pairs_entities_ids = sorted({(entity2id[s], entity2id[t])
+                                         for s, t in pairs if entity2id[s] != entity2id[t]})
+            all_entities_ids = sorted({entity2id[e] for e in all_entities})
 
             # merge entity words in *content* into a single token, and replace by id
             # sorted ents by word len to avoid mismatch
@@ -187,9 +191,11 @@ def main(args):
                         tie_entities_mismatch += 1
 
             # # remove entities which cannot be found in article
-            all_entities_ids = {e for e in all_entities_ids if e in epos}
-            pairs_entities_ids = {(s, t) for s, t in pairs_entities_ids if s in epos and t in epos}
+            all_entities_ids = sorted({e for e in all_entities_ids if e in epos})
+            pairs_entities_ids = sorted({(s, t) for s, t in pairs_entities_ids if s in epos and t in epos})
             if len(pairs_entities_ids) == 0:
+                continue
+            if len(all_entities_ids) > 30:
                 continue
             # make negative samples and select sentences
             article_pos_num = 0
@@ -211,7 +217,11 @@ def main(args):
                           'src_pos_original': epos[src], 'tgt_pos_original': epos[tgt],
                           'sents': sents, 'label': label}
                 article_samples.append(sample)
+
+                if label == 1:
+                    blame_tie_dist.append(min((abs(si - ti) for (si, _), (ti, _) in zip(epos[src], epos[tgt]))))
             assert article_pos_num > 0
+
             num_pos_samples += article_pos_num
             num_samples += article_samples_num
             num_articles += 1
@@ -271,9 +281,24 @@ def main(args):
     print(f'pos: {num_pos_samples}, neg: {num_samples-num_pos_samples}, '
           f'neg / pos = {(num_samples-num_pos_samples)/num_pos_samples:.2f}, '
           f'overall pos percentage: {num_pos_samples / num_samples * 100:.2f}%')
+    print(f'avg pair sentence distance: {mean(blame_tie_dist):.2f} ± {stdev(blame_tie_dist):.2f}')
 
-    if args.split:
-        pass
+    with open('num_entities_dist.txt', 'w') as f:
+        f.write('\n'.join([str(e) for e in sorted(num_entities_dist, reverse=True)]))
+    with open('samples_ratio_dist.txt', 'w') as f:
+        f.write('\n'.join([str(e) for e in sorted(samples_ratio_dist, reverse=True)]))
+    with open('blame_tie_dist.txt', 'w') as f:
+        f.write('\n'.join([str(e) for e in sorted(blame_tie_dist, reverse=True)]))
+
+    # plt.figure()
+    # sns.distplot(num_entities_dist)
+    # plt.show()
+    # plt.figure()
+    # sns.distplot(samples_ratio_dist)
+    # plt.show()
+    # plt.figure()
+    # sns.distplot(blame_tie_dist)
+    # plt.show()
 
 
 def str2bool(v):
