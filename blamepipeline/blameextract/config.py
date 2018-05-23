@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 22:37:51
+# @Last Modified time: 2018-05-23 20:34:14
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -48,7 +48,7 @@ def add_model_args(parser):
                        help='add allennlp ELMO implementation and weights')
     model.add_argument('--add-sdf', type='bool', default=False,
                        help='add sentence distance feature')
-    model.add_argument('--unk-entity', type='bool', default=False,
+    model.add_argument('--unk-entity', type='bool', default=True,
                        help='Mask entity work by PAD symbol')
     model.add_argument('--embedding-dim', type=int, default=300,
                        help='Embedding size if embedding_file is not given')
