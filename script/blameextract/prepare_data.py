@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-23 20:35:38
+# @Last Modified time: 2018-05-25 15:07:51
 
 '''
 Within an article, merge the same entities and construct a map from entity name to entity id.
@@ -21,8 +21,8 @@ from statistics import mean, stdev
 
 from termcolor import colored
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import seaborn as sns
 
 from blamepipeline import DATA_DIR as DATA_ROOT
 
