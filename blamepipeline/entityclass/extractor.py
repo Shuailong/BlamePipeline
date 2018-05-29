@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:42:04
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-25 16:58:36
+# @Last Modified time: 2018-05-29 00:18:54
 """Implementation of the EntityClassifier Class."""
 
 import torch
@@ -23,10 +23,20 @@ class LSTMContextClassifier(nn.Module):
         super(LSTMContextClassifier, self).__init__()
         # Store config
         self.args = args
-        # Word embeddings (+1 for padding)
-        self.embedding = nn.Embedding(args.vocab_size,
-                                      args.embedding_dim,
-                                      padding_idx=0)
+
+        if args.pretrain_file != 'elmo':
+            # Word embeddings (+1 for padding)
+            self.embedding = nn.Embedding(args.vocab_size,
+                                          args.embedding_dim,
+                                          padding_idx=0)
+        else:
+            # args.pretrain_file == 'elmo'
+            from allennlp.modules.elmo import Elmo
+            self.elmo = Elmo(args.elmo_options_file, args.elmo_weights_file, 2,
+                             requires_grad=not args.fix_embeddings,
+                             dropout=0)
+            self.elmo_linear = nn.Linear(1024, args.embedding_dim)
+
         self.sent_rnn = layers.StackedBRNN(
             input_size=args.embedding_dim,
             hidden_size=args.hidden_size,
@@ -49,19 +59,20 @@ class LSTMContextClassifier(nn.Module):
         else:
             self.linear = nn.Linear(out_hidden_size, args.label_size)
 
-    def forward(self, x, x_mask, batch_entities, batch_epos):
+    def forward(self, x, x_mask, batch_entities, batch_epos, batch_sent_chars):
         """Inputs:
         x = sentence word indices             [sents * len]
         x_mask = sentence padding mask        [sents * len]
         """
-        if self.args.unk_entity:
-            # mask the entity position
-            for poss in batch_epos.values():
-                for pos in poss:
-                    x[tuple(pos)] = 0
-                    # x_mask[(pos)] = 1
+        if self.args.pretrain_file != 'elmo':
+            x_emb = self.embedding(x)
+        else:
+            x_elmo = self.elmo(batch_sent_chars)
+            x_emb = x_elmo['elmo_representations'][-1]
+            # x_mask = x_elmo['mask']
+            # x_mask = 1 - x_mask
+            x_emb = self.elmo_linear(x_emb)
 
-        x_emb = self.embedding(x)
         if self.args.dropout_emb > 0:
             x_emb = nn.functional.dropout(x_emb, p=self.args.dropout_emb,
                                           training=self.training)

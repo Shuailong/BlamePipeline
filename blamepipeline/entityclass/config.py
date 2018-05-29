@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-25 17:07:39
+# @Last Modified time: 2018-05-29 00:29:52
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -16,15 +16,15 @@ logger = logging.getLogger(__name__)
 # Index of arguments concerning the core model architecture
 MODEL_ARCHITECTURE = {
     'model_type', 'embedding_dim', 'hidden_size', 'layers',
-    'rnn_type', 'concat_rnn_layers', 'kernel_sizes', 'include_emb',
-    'add_self_attn', 'unk_entity', 'feature_size', 'add_elmo', 'add_sdf'
+    'rnn_type', 'concat_rnn_layers', 'kernel_sizes',
+    'unk_entity', 'feature_size', 'pretrain_file', 'elmo_options_file', 'elmo_weights_file'
 }
 
 # Index of arguments concerning the model optimizer/training
 MODEL_OPTIMIZER = {
     'fix_embeddings', 'optimizer', 'learning_rate', 'momentum', 'weight_decay',
     'rnn_padding', 'dropout_rnn', 'dropout_cnn', 'dropout_rnn_output', 'dropout_emb',
-    'grad_clipping', 'dropout_feature', 'dropout_final', 'pos_weight'
+    'grad_clipping', 'dropout_feature', 'dropout_final'
 }
 
 
@@ -42,11 +42,11 @@ def add_model_args(parser):
                        help='Model architecture type')
     model.add_argument('--unk-entity', type='bool', default=True,
                        help='Mask entity work by PAD symbol')
-    model.add_argument('--embedding-dim', type=int, default=300,
+    model.add_argument('--embedding-dim', type=int, default=100,
                        help='Embedding size if embedding_file is not given')
-    model.add_argument('--hidden-size', type=int, default=300,
+    model.add_argument('--hidden-size', type=int, default=100,
                        help='Hidden size of RNN/CNN units')
-    model.add_argument('--feature-size', type=int, default=0,
+    model.add_argument('--feature-size', type=int, default=20,
                        help='final feature layer')
     model.add_argument('--layers', type=int, default=1,
                        help='Number of encoding layers for sentence')
@@ -62,7 +62,7 @@ def add_model_args(parser):
 
     # Optimization details
     optim = parser.add_argument_group('Blame Extractor Optimization')
-    optim.add_argument('--dropout-emb', type=float, default=0,
+    optim.add_argument('--dropout-emb', type=float, default=0.5,
                        help='Dropout rate for word embeddings')
     optim.add_argument('--dropout-rnn', type=float, default=0.0,
                        help='Dropout rate for RNN states')
@@ -70,9 +70,9 @@ def add_model_args(parser):
                        help='Dropout rate for CNN output')
     optim.add_argument('--dropout-rnn-output', type='bool', default=True,
                        help='Whether to dropout the RNN output')
-    optim.add_argument('--dropout-feature', type=float, default=0,
+    optim.add_argument('--dropout-feature', type=float, default=0.5,
                        help='Feature layer dropout')
-    optim.add_argument('--dropout_final', type=float, default=0,
+    optim.add_argument('--dropout_final', type=float, default=0.5,
                        help='Final layer dropout')
     optim.add_argument('--optimizer', type=str, default='adam',
                        help='Optimizer: sgd or adam')
@@ -80,7 +80,7 @@ def add_model_args(parser):
                        help='Initial learning rate')
     optim.add_argument('--grad-clipping', type=float, default=3,
                        help='Gradient clipping')
-    optim.add_argument('--weight-decay', type=float, default=0,
+    optim.add_argument('--weight-decay', type=float, default=1e-8,
                        help='Weight decay factor')
     optim.add_argument('--momentum', type=float, default=0,
                        help='Momentum factor')
@@ -88,8 +88,8 @@ def add_model_args(parser):
                        help='Keep word embeddings fixed (use pretrained)')
     optim.add_argument('--rnn-padding', type='bool', default=False,
                        help='Explicitly account for padding in RNN encoding')
-    optim.add_argument('--weighted-sampling', type='bool', default=True,
-                       help='Weighted sampling during training')
+    # optim.add_argument('--weighted-sampling', type='bool', default=True,
+    #                    help='Weighted sampling during training')
 
 
 def get_model_args(args):

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-25 21:24:47
+# @Last Modified time: 2018-05-28 19:36:25
 
 """Train the blame tie extractor"""
 
@@ -82,18 +82,18 @@ def add_train_args(parser):
                        help='Unique model identifier (.mdl, .txt, .checkpoint)')
     files.add_argument('--data-dir', type=str, default=DATA_DIR,
                        help='Directory of training/validation data')
-    files.add_argument('--train-file', type=str, default='entity-class-samples-train.json',
+    files.add_argument('--train-file', type=str, default='entity-class-samples-train-binary.json',
                        help='train file')
-    files.add_argument('--dev-file', type=str, default='entity-class-samples-dev.json',
+    files.add_argument('--dev-file', type=str, default='entity-class-samples-dev-binary.json',
                        help='dev file')
-    files.add_argument('--test-file', type=str, default='entity-class-samples-test.json',
+    files.add_argument('--test-file', type=str, default='entity-class-samples-test-binary.json',
                        help='test file')
     files.add_argument('--stats-file', type='bool', default=False,
                        help='store training stats in to file for display in codalab')
     files.add_argument('--embed-dir', type=str, default=EMBED_DIR,
                        help='Directory of pre-trained embedding files')
-    files.add_argument('--embedding-file', type=str, choices=['word2vec', 'glove'],
-                       default=None, help='Space-separated pretrained embeddings file')
+    files.add_argument('--pretrain-file', type=str, choices=['w2v', 'glove', 'elmo'],
+                       default=None, help='pretrained embeddings file/elmo')
     files.add_argument('--valid-size', type=float, default=0.1,
                        help='validation set ratio')
 
@@ -103,18 +103,22 @@ def add_train_args(parser):
                          help='Log state after every <display_iter> batches')
     general.add_argument('--metrics', type=str, choices=['precision', 'recall', 'F1', 'acc'],
                          help='metrics to display when training', nargs='+',
-                         default=['acc'])
-    general.add_argument('--valid-metric', type=str, default='acc',
+                         default=['F1', 'precision', 'recall', 'acc'])
+    general.add_argument('--valid-metric', type=str, default='F1',
                          help='The evaluation metric used for model selection')
-    general.add_argument('--uncased', type='bool', default=False,
+    general.add_argument('--uncased', type='bool', default=True,
                          help='uncase data')
-    general.add_argument('--vocab-cutoff', type=int, default=0,
+    general.add_argument('--vocab-cutoff', type=int, default=1,
                          help='word frequency larger than this will be in dictionary')
+    general.add_argument('--visdom', type='bool', default=False,
+                         help='Use visdom to visualize loss etc.')
+    general.add_argument('--visdom-port', type=int, default=9707,
+                         help='Visdom port number')
 
     # debug
     debug = parser.add_argument_group('Debug')
     debug.add_argument('--debug', type='bool', default=False,
-                       help='Debug mode: only run 1/10 fold.')
+                       help='Debug mode: show dev and test data vocabulary coverage and use small portion of data.')
 
 
 def set_defaults(args):
@@ -134,15 +138,25 @@ def set_defaults(args):
         if not os.path.isfile(args.test_file):
             raise IOError('No such file: %s' % args.test_file)
 
-    if args.embedding_file:
-        if args.embedding_file == 'word2vec':
-            args.embedding_file = 'w2v.googlenews.300d.txt'
-        else:
-            args.embedding_file = f'glove.6B.{args.embedding_dim}d.txt'
-        args.embedding_file = os.path.join(args.embed_dir, args.embedding_file)
-        if not os.path.isfile(args.embedding_file):
-            raise IOError('No such file: %s' % args.embedding_file)
-
+    if args.pretrain_file:
+        if args.pretrain_file in ['w2v', 'glove']:
+            if args.pretrain_file == 'w2v':
+                args.pretrain_file = f'w2v.googlenews.{args.embedding_dim}d.txt'
+            else:
+                args.pretrain_file = f'glove.6B.{args.embedding_dim}d.txt'
+            args.pretrain_file = os.path.join(args.embed_dir, args.pretrain_file)
+            if not os.path.isfile(args.pretrain_file):
+                raise IOError(f'No such file: {args.pretrain_file}')
+        elif args.pretrain_file == 'elmo':
+            # args.pretrain_file == 'elmo':
+            args.elmo_weights_file = 'elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5'
+            args.elmo_options_file = 'elmo_2x4096_512_2048cnn_2xhighway_options.json'
+            args.elmo_weights_file = os.path.join(args.embed_dir, args.elmo_weights_file)
+            args.elmo_options_file = os.path.join(args.embed_dir, args.elmo_options_file)
+            if not os.path.isfile(args.elmo_weights_file):
+                raise IOError(f'No such file: {args.elmo_weights_file}')
+            if not os.path.isfile(args.elmo_options_file):
+                raise IOError(f'No such file: {args.elmo_options_file}')
     # Set model directory
     subprocess.call(['mkdir', '-p', args.model_dir])
 
@@ -160,17 +174,17 @@ def set_defaults(args):
         args.stats_file = os.path.join(args.model_dir, 'stats')
 
     # Embeddings options
-    if args.embedding_file:
-        with open(args.embedding_file) as f:
+    if args.pretrain_file and ('glove' in args.pretrain_file or 'w2v' in args.pretrain_file):
+        with open(args.pretrain_file) as f:
             dim = len(f.readline().strip().split(' ')) - 1
         args.embedding_dim = dim
     elif not args.embedding_dim:
-        raise RuntimeError('Either embedding_file or embedding_dim '
+        raise RuntimeError('Either pretrain_file or embedding_dim '
                            'needs to be specified.')
 
-    # Make sure fix_embeddings and embedding_file are consistent
+    # Make sure fix_embeddings and pretrain_file are consistent
     if args.fix_embeddings:
-        if not args.embedding_file:
+        if not args.pretrain_file:
             logger.warning('WARN: fix_embeddings set to False '
                            'as embeddings are random.')
             args.fix_embeddings = False
@@ -199,8 +213,8 @@ def init_from_scratch(args, train_exs, dev_exs, test_exs):
     model = EntityClassifier(config.get_model_args(args), word_dict, label_dict)
 
     # Load pretrained embeddings for words in dictionary
-    if args.embedding_file:
-        model.load_embeddings(word_dict.tokens(), args.embedding_file)
+    if args.pretrain_file and ('glove' in args.pretrain_file or 'w2v' in args.pretrain_file):
+        model.load_embeddings(word_dict.tokens(), args.pretrain_file)
 
     return model
 
@@ -240,12 +254,12 @@ def train(args, data_loader, model, global_stats):
 
 
 def evaluate(pred, true, eps=1e-9):
-    assert pred.size() == true.size()
+    assert len(pred) == len(true)
     true_positive = (pred * true).sum().item()
     precision = true_positive / (pred.sum().item() + eps)
     recall = true_positive / (true.sum().item() + eps)
     F1 = 2 * (precision * recall) / (precision + recall + eps)
-    acc = (pred == true).sum().item() / pred.size(0)
+    acc = (pred == true).sum().item() / len(pred)
     return {'precision': precision, 'recall': recall, 'F1': F1, 'acc': acc}
 
 
@@ -275,6 +289,9 @@ def validate(args, data_loader, model, global_stats, mode, confusion_meter=None)
 
     preds = torch.cat(preds, dim=0)
     trues = torch.cat(trues, dim=0)
+    preds = preds.cpu().data.numpy()
+    trues = trues.cpu().numpy()
+
     metrics = {m: v for m, v in evaluate(preds, trues).items() if m in args.metrics}
 
     cm = None
@@ -299,28 +316,32 @@ def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=No
     stats = {'timer': utils.Timer(), 'epoch': 0, 'best_valid': 0, 'best_epoch': 0, 'fold': fold}
     start_epoch = 0
 
-    # add visdom logger code
-    port = 9707
-    train_loss_logger = VisdomPlotLogger(
-        'line', port=port, opts={'title': f'{args.model_name} Train Loss'})
-    train_acc_logger = VisdomPlotLogger(
-        'line', port=port, opts={'title': f'{args.model_name} Train Class Accuracy'})
-    idx2label = {i: label for label, i in model.label_dict.items()}
-    label_names = [idx2label[i] for i in range(model.args.label_size)]
-    train_confusion_logger = VisdomLogger('heatmap',
-                                          port=port,
-                                          opts={'title': f'{args.model_name} Train Confusion Matrix',
-                                                'columnnames': label_names,
-                                                'rownames': label_names})
-    valid_acc_logger = VisdomPlotLogger(
-        'line', port=port, opts={'title': f'{args.model_name} Valid Class Accuracy'})
-    valid_confusion_logger = VisdomLogger('heatmap',
-                                          port=port,
-                                          opts={'title': f'{args.model_name} Valid Confusion Matrix',
-                                                'columnnames': label_names,
-                                                'rownames': label_names})
-    train_confusion_meter = tnt.meter.ConfusionMeter(model.args.label_size, normalized=True)
-    valid_confusion_meter = tnt.meter.ConfusionMeter(model.args.label_size, normalized=True)
+    if args.visdom:
+        # add visdom logger code
+        port = args.visdom_port
+        train_loss_logger = VisdomPlotLogger(
+            'line', port=port, opts={'title': f'{args.model_name} Train Loss'})
+        train_metric_logger = VisdomPlotLogger(
+            'line', port=port, opts={'title': f'{args.model_name} Train Class Accuracy'})
+        idx2label = {i: label for label, i in model.label_dict.items()}
+        label_names = [idx2label[i] for i in range(model.args.label_size)]
+        train_confusion_logger = VisdomLogger('heatmap',
+                                              port=port,
+                                              opts={'title': f'{args.model_name} Train Confusion Matrix',
+                                                    'columnnames': label_names,
+                                                    'rownames': label_names})
+        valid_metric_logger = VisdomPlotLogger(
+            'line', port=port, opts={'title': f'{args.model_name} Valid Class Accuracy'})
+        valid_confusion_logger = VisdomLogger('heatmap',
+                                              port=port,
+                                              opts={'title': f'{args.model_name} Valid Confusion Matrix',
+                                                    'columnnames': label_names,
+                                                    'rownames': label_names})
+        train_confusion_meter = tnt.meter.ConfusionMeter(model.args.label_size, normalized=True)
+        valid_confusion_meter = tnt.meter.ConfusionMeter(model.args.label_size, normalized=True)
+    else:
+        train_confusion_meter = None
+        valid_confusion_meter = None
 
     try:
         for epoch in range(start_epoch, args.num_epochs):
@@ -342,15 +363,16 @@ def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=No
             for m in train_res:
                 stats['dev_' + m] = val_res[m]
 
-            train_loss_logger.log(epoch, loss)
-            train_acc_logger.log(epoch, train_res['acc'])
-            train_confusion_logger.log(train_cfm)
+            if args.visdom:
+                train_loss_logger.log(epoch, loss)
+                train_metric_logger.log(epoch, train_res[args.valid_metric])
+                train_confusion_logger.log(train_cfm)
 
-            valid_acc_logger.log(epoch, val_res['acc'])
-            valid_confusion_logger.log(valid_cfm)
+                valid_metric_logger.log(epoch, val_res[args.valid_metric])
+                valid_confusion_logger.log(valid_cfm)
 
-            train_confusion_meter.reset()
-            valid_confusion_meter.reset()
+                train_confusion_meter.reset()
+                valid_confusion_meter.reset()
 
             # Save best valid
             if val_res[args.valid_metric] > stats['best_valid']:
@@ -379,8 +401,9 @@ def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=No
 
     logger.info('Load best model...')
     model = EntityClassifier.load(args.model_file + fold_info, args)
-    device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
-    model.to(device)
+    # device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
+    # model.to(device)
+    model.cuda()
     stats['epoch'] = stats['best_epoch']
     if fold is not None:
         mode = f'fold {fold} test'
@@ -400,8 +423,10 @@ def initialize_model(train_exs, dev_exs, test_exs):
     model.init_optimizer()
 
     # Use the GPU?
-    device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
-    model.to(device)
+    # device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
+    # model.to(device)
+    if args.cuda:
+        model.cuda()
 
     # Use multiple GPUs?
     if args.parallel:
@@ -444,6 +469,10 @@ def main(args):
     logger.info('-' * 100)
     logger.info('Make data loaders')
     if args.test_file:
+        if args.debug:
+            train_exs = train_exs[:10]
+            dev_exs = dev_exs[:3]
+            test_exs = test_exs[:3]
         model = initialize_model(train_exs, dev_exs, test_exs)
         train_loader, dev_loader, test_loader = utils.split_loader(train_exs, test_exs, args, model,
                                                                    dev_exs=dev_exs)

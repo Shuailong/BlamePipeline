@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-25 15:54:31
+# @Last Modified time: 2018-05-28 14:53:37
 
 '''
 Based on the output of script/blameextract/prepare_data.py
@@ -20,9 +20,6 @@ import pickle  # json cannot accpet tuple key
 # from statistics import mean, stdev
 # from termcolor import colored
 from tqdm import tqdm
-
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 
 from blamepipeline import DATA_DIR as DATA_ROOT
@@ -188,14 +185,20 @@ def main(args):
             epos = {entity: [(sents.index(content[si]), wi) for si, wi in epos[entity]] for entity in all_entities_ids}
             entity_labels = []
             for e in all_entities_ids:
-                if e in src_entities and e not in tgt_entities:
-                    label = 'S'
-                elif e not in src_entities and e in tgt_entities:
-                    label = 'T'
-                elif e in src_entities and e in tgt_entities:
-                    label = 'ST'
+                if args.binary:
+                    if e in src_entities or e in tgt_entities:
+                        label = 'S/T'
+                    else:
+                        label = 'N'
                 else:
-                    label = 'N'
+                    if e in src_entities and e not in tgt_entities:
+                        label = 'S'
+                    elif e not in src_entities and e in tgt_entities:
+                        label = 'T'
+                    elif e in src_entities and e in tgt_entities:
+                        label = 'ST'
+                    else:
+                        label = 'N'
                 entity_labels.append(label)
                 labels_dist[label] += 1
                 num_samples += 1
@@ -216,9 +219,10 @@ def main(args):
         test_articles_samples = samples[train_articles_num + dev_articles_num:]
 
         fname, ext = os.path.splitext(args.samples_file)
-        train_file = fname + '-train' + ext
-        dev_file = fname + '-dev' + ext
-        test_file = fname + '-test' + ext
+        tag = '-binary' if args.binary else ''
+        train_file = fname + '-train' + tag + ext
+        dev_file = fname + '-dev' + tag + ext
+        test_file = fname + '-test' + tag + ext
 
         with open(train_file, 'w') as f:
             for article_sample in train_articles_samples:
@@ -233,10 +237,13 @@ def main(args):
                 f.write(json.dumps(article_sample) + '\n')
         print(f'{len(test_articles_samples)} article samples written to {test_file}.')
     else:
-        with open(args.samples_file, 'w') as fout:
+        fname, ext = os.path.splitext(args.samples_file)
+        tag = '-binary' if args.binary else ''
+        samples_file = fname + tag + ext
+        with open(samples_file, 'w') as fout:
             for article_sample in samples:
                 fout.write(json.dumps(article_sample) + '\n')
-        print(f'{len(samples)} article samples written to {args.samples_file}.')
+        print(f'{len(samples)} article samples written to {samples_file}.')
 
 
 def str2bool(v):
@@ -252,6 +259,7 @@ if __name__ == '__main__':
                         help='build a merge dict locally(per article) or globally(dataset level)')
     parser.add_argument('--split', type='bool', default=True)
     parser.add_argument('--data-force', type='bool', default=False)
+    parser.add_argument('--binary', type='bool', default=True)
     parser.set_defaults()
     args = parser.parse_args()
     main(args)

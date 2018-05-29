@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-25 17:08:29
+# @Last Modified time: 2018-05-28 23:59:04
 
 '''
 EntityClassifier Class Wrapper
@@ -17,6 +17,8 @@ import copy
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
+
+from torch.autograd import Variable
 
 from .config import override_model_args
 from .extractor import LSTMContextClassifier
@@ -96,7 +98,7 @@ class EntityClassifier(object):
         Args:
             state_dict: network parameters
         """
-        if self.args.fix_embeddings:
+        if self.args.fix_embeddings and self.args.pretrain_file != 'elmo':
             for p in self.network.embedding.parameters():
                 p.requires_grad = False
         parameters = [p for p in self.network.parameters() if p.requires_grad]
@@ -132,8 +134,18 @@ class EntityClassifier(object):
         self.network.train()
 
         # Transfer to GPU
-        inputs = [e.to(device=self.device) if not isinstance(e, (list, dict)) else e for e in ex[:-1]]
-        label = ex[-1].to(device=self.device)
+        # inputs = [e.to(device=self.device) if not isinstance(e, (list, dict)) else e for e in ex[:-1]]
+        # label = ex[-1].to(device=self.device)
+        # inputs = [Variable(e.cuda()) if isinstance(e, torch.Tensor) else e for e in ex[:-1]]
+        inputs = []
+        for e in ex[:-1]:
+            if isinstance(e, (torch.LongTensor, torch.ByteTensor, torch.cuda.LongTensor, torch.cuda.ByteTensor)):
+                inputs.append(Variable(e).cuda())
+            elif isinstance(e, Variable):
+                inputs.append(e.cuda())
+            else:
+                inputs.append(e)
+        label = Variable(ex[-1]).cuda()
         # Run forward
         score = self.network(*inputs)
 
@@ -145,14 +157,14 @@ class EntityClassifier(object):
         loss.backward()
 
         # Clip gradients
-        torch.nn.utils.clip_grad_norm_(self.network.linear.parameters(),
-                                       self.args.grad_clipping)
+        torch.nn.utils.clip_grad_norm(self.network.linear.parameters(),
+                                      self.args.grad_clipping)
 
         # Update parameters
         self.optimizer.step()
         self.updates += 1
 
-        return loss.item(), ex[0].size(0)
+        return loss.data[0], ex[0].size(0)
 
     # --------------------------------------------------------------------------
     # Prediction
@@ -166,11 +178,22 @@ class EntityClassifier(object):
         self.network.eval()
 
         # Transfer to GPU
-        inputs = [e.to(self.device) if not isinstance(e, (list, dict)) else e for e in ex]
+        # inputs = [e.to(self.device) if not isinstance(e, (list, dict)) else e for e in ex]
+        # inputs = [Variable(e, volatile=True).cuda() if isinstance(e, torch.Tensor) else e for e in ex]
+        inputs = []
+        for e in ex:
+            if isinstance(e, (torch.LongTensor, torch.ByteTensor, torch.cuda.LongTensor, torch.cuda.ByteTensor)):
+                inputs.append(Variable(e, volatile=True).cuda())
+            elif isinstance(e, Variable):
+                e.volatile = True
+                inputs.append(e.cuda())
+            else:
+                inputs.append(e)
 
-        with torch.no_grad():
-            # Run forward
-            score = self.network(*inputs)
+        # with torch.no_grad():
+        #     # Run forward
+        #     score = self.network(*inputs)
+        score = self.network(*inputs)
 
         # Decode predictions
         return score.cpu().max(1)[1]
@@ -212,9 +235,9 @@ class EntityClassifier(object):
     # Runtime
     # --------------------------------------------------------------------------
 
-    def to(self, device):
-        self.device = device
-        self.network = self.network.to(device)
+    def cuda(self):
+        # self.device = device
+        self.network = self.network.cuda()
         # self.loss_weights = self.loss_weights.to(device)
 
     def parallelize(self):
