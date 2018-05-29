@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-29 00:29:52
+# @Last Modified time: 2018-05-29 15:49:09
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -72,7 +72,7 @@ def add_model_args(parser):
                        help='Whether to dropout the RNN output')
     optim.add_argument('--dropout-feature', type=float, default=0.5,
                        help='Feature layer dropout')
-    optim.add_argument('--dropout_final', type=float, default=0.5,
+    optim.add_argument('--dropout-final', type=float, default=0.5,
                        help='Final layer dropout')
     optim.add_argument('--optimizer', type=str, default='adam',
                        help='Optimizer: sgd or adam')
