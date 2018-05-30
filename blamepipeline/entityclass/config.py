@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-29 15:49:09
+# @Last Modified time: 2018-05-29 22:33:22
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -16,8 +16,9 @@ logger = logging.getLogger(__name__)
 # Index of arguments concerning the core model architecture
 MODEL_ARCHITECTURE = {
     'model_type', 'embedding_dim', 'hidden_size', 'layers',
-    'rnn_type', 'concat_rnn_layers', 'kernel_sizes',
-    'unk_entity', 'feature_size', 'pretrain_file', 'elmo_options_file', 'elmo_weights_file'
+    'rnn_type', 'concat_rnn_layers', 'kernel_sizes', 'unk_entity',
+    'feature_size', 'pretrain_file', 'elmo_options_file', 'elmo_weights_file',
+    'skip_rnn'
 }
 
 # Index of arguments concerning the model optimizer/training
@@ -52,6 +53,8 @@ def add_model_args(parser):
                        help='Number of encoding layers for sentence')
     model.add_argument('--rnn-type', type=str, default='lstm',
                        help='RNN type: LSTM, GRU, or RNN')
+    model.add_argument('--skip-rnn', type='bool', default=False,
+                       help='Skip RNN layer. Use embeddings directly.')
     model.add_argument('--kernel-sizes', type=int, nargs='+', default=[3, 4, 5],
                        help='CNN kernel sizes')
 
@@ -84,7 +87,7 @@ def add_model_args(parser):
                        help='Weight decay factor')
     optim.add_argument('--momentum', type=float, default=0,
                        help='Momentum factor')
-    optim.add_argument('--fix-embeddings', type='bool', default=False,
+    optim.add_argument('--fix-embeddings', type='bool', default=True,
                        help='Keep word embeddings fixed (use pretrained)')
     optim.add_argument('--rnn-padding', type='bool', default=False,
                        help='Explicitly account for padding in RNN encoding')

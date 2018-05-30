@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:42:04
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-29 00:18:54
+# @Last Modified time: 2018-05-29 22:37:14
 """Implementation of the EntityClassifier Class."""
 
 import torch
@@ -37,21 +37,23 @@ class LSTMContextClassifier(nn.Module):
                              dropout=0)
             self.elmo_linear = nn.Linear(1024, args.embedding_dim)
 
-        self.sent_rnn = layers.StackedBRNN(
-            input_size=args.embedding_dim,
-            hidden_size=args.hidden_size,
-            num_layers=args.layers,
-            dropout_rate=args.dropout_rnn,
-            dropout_output=args.dropout_rnn_output,
-            concat_layers=args.concat_rnn_layers,
-            rnn_type=self.RNN_TYPES[args.rnn_type],
-            padding=args.rnn_padding,
-        )
+        if not args.skip_rnn:
+            self.sent_rnn = layers.StackedBRNN(
+                input_size=args.embedding_dim,
+                hidden_size=args.hidden_size,
+                num_layers=args.layers,
+                dropout_rate=args.dropout_rnn,
+                dropout_output=args.dropout_rnn_output,
+                concat_layers=args.concat_rnn_layers,
+                rnn_type=self.RNN_TYPES[args.rnn_type],
+                padding=args.rnn_padding,
+            )
+            out_hidden_size = 2 * args.hidden_size
+            if args.concat_rnn_layers:
+                out_hidden_size *= args.layers
 
-        # Output sizes of rnn encoders
-        out_hidden_size = 2 * args.hidden_size
-        if args.concat_rnn_layers:
-            out_hidden_size *= args.layers
+        else:
+            out_hidden_size = args.embedding_dim
 
         if args.feature_size > 0:
             self.condense_feature = nn.Linear(out_hidden_size, args.feature_size)
@@ -77,7 +79,10 @@ class LSTMContextClassifier(nn.Module):
             x_emb = nn.functional.dropout(x_emb, p=self.args.dropout_emb,
                                           training=self.training)
 
-        sent_hiddens = self.sent_rnn(x_emb, x_mask)
+        if not self.args.skip_rnn:
+            sent_hiddens = self.sent_rnn(x_emb, x_mask)
+        else:
+            sent_hiddens = x_emb
 
         batch_feats = []
         for batch_i, e in enumerate(batch_entities):
