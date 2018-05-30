@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-30 11:26:53
+# @Last Modified time: 2018-05-30 20:32:08
 
 """Train the blame tie extractor"""
 
@@ -508,7 +508,7 @@ def main(args):
 if __name__ == '__main__':
     # Parse cmdline args and setup environment
     parser = argparse.ArgumentParser(
-        'Train Blame Extractor BiLSTM Model',
+        'Train EntityClassifier BiLSTM Model',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     add_train_args(parser)

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-29 22:33:22
+# @Last Modified time: 2018-05-30 20:39:34
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -37,7 +37,7 @@ def add_model_args(parser):
     parser.register('type', 'bool', str2bool)
 
     # Model architecture
-    model = parser.add_argument_group('Blame Extractor BiLSTM Model Architecture')
+    model = parser.add_argument_group('EntityClassifier BiLSTM Model Architecture')
     model.add_argument('--model-type', type=str, default='context',
                        choices=['context'],
                        help='Model architecture type')

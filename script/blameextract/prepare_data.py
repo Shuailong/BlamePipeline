@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-25 15:07:51
+# @Last Modified time: 2018-05-30 20:21:13
 
 '''
 Within an article, merge the same entities and construct a map from entity name to entity id.
@@ -21,8 +21,7 @@ from statistics import mean, stdev
 
 from termcolor import colored
 from tqdm import tqdm
-# import matplotlib.pyplot as plt
-# import seaborn as sns
+
 
 from blamepipeline import DATA_DIR as DATA_ROOT
 
@@ -152,8 +151,10 @@ def main(args):
             d = json.loads(line)
             content = d['content']
             pairs = sorted({(tuple(p['source']), tuple(p['target'])) for p in d['pairs']})
-            # all_entities = sorted({tuple(e) for e in d['entities']})
-            all_entities = sorted({e for p in pairs for e in p})
+            if args.all_entities:
+                all_entities = sorted({tuple(e) for e in d['entities']})
+            else:
+                all_entities = sorted({e for p in pairs for e in p})
             if args.merge_entity == 'local':
                 entity2id = entity_merge_local(all_entities)
             pairs_entities_ids = sorted({(entity2id[s], entity2id[t])
@@ -181,7 +182,7 @@ def main(args):
                 for wi, w in enumerate(s):
                     if w in all_entities_ids:
                         epos[w].append((si, wi))
-            # DEBUG
+
             for i, e in enumerate(all_entities_ids):
                 if e not in epos:
                     all_entities_mismatch += 1
@@ -195,8 +196,7 @@ def main(args):
             pairs_entities_ids = sorted({(s, t) for s, t in pairs_entities_ids if s in epos and t in epos})
             if len(pairs_entities_ids) == 0:
                 continue
-            if len(all_entities_ids) > 30:
-                continue
+
             # make negative samples and select sentences
             article_pos_num = 0
             article_samples_num = 0
@@ -283,22 +283,26 @@ def main(args):
           f'overall pos percentage: {num_pos_samples / num_samples * 100:.2f}%')
     print(f'avg pair sentence distance: {mean(blame_tie_dist):.2f} ± {stdev(blame_tie_dist):.2f}')
 
-    with open('num_entities_dist.txt', 'w') as f:
-        f.write('\n'.join([str(e) for e in sorted(num_entities_dist, reverse=True)]))
-    with open('samples_ratio_dist.txt', 'w') as f:
-        f.write('\n'.join([str(e) for e in sorted(samples_ratio_dist, reverse=True)]))
-    with open('blame_tie_dist.txt', 'w') as f:
-        f.write('\n'.join([str(e) for e in sorted(blame_tie_dist, reverse=True)]))
+    if args.save_stats:
+        with open('num_entities_dist.txt', 'w') as f:
+            f.write('\n'.join([str(e) for e in sorted(num_entities_dist, reverse=True)]))
+        with open('samples_ratio_dist.txt', 'w') as f:
+            f.write('\n'.join([str(e) for e in sorted(samples_ratio_dist, reverse=True)]))
+        with open('blame_tie_dist.txt', 'w') as f:
+            f.write('\n'.join([str(e) for e in sorted(blame_tie_dist, reverse=True)]))
 
-    # plt.figure()
-    # sns.distplot(num_entities_dist)
-    # plt.show()
-    # plt.figure()
-    # sns.distplot(samples_ratio_dist)
-    # plt.show()
-    # plt.figure()
-    # sns.distplot(blame_tie_dist)
-    # plt.show()
+    if args.plt_stats:
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        plt.figure()
+        sns.distplot(num_entities_dist)
+        plt.show()
+        plt.figure()
+        sns.distplot(samples_ratio_dist)
+        plt.show()
+        plt.figure()
+        sns.distplot(blame_tie_dist)
+        plt.show()
 
 
 def str2bool(v):
@@ -308,13 +312,20 @@ def str2bool(v):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Preprocess data for blame extractor')
     parser.register('type', 'bool', str2bool)
+    # files
     parser.add_argument('--dataset-file', type=str, default='dataset.json')
     parser.add_argument('--samples-file', type=str, default='samples.json')
+    # data
     parser.add_argument('--merge-entity', type=str, default='local',
                         help='build a merge dict locally(per article) or globally(dataset level)')
     parser.add_argument('--ignore-direction', type='bool', default=False)
     parser.add_argument('--split', type='bool', default=True)
+    parser.add_argument('--all-entities', type='bool', default=False)
+
+    # utility
     parser.add_argument('--data-force', type='bool', default=False)
+    parser.add_argument('--save-stats', type='bool', default=False)
+    parser.add_argument('--plt-stats', type='bool', default=False)
     parser.set_defaults()
     args = parser.parse_args()
     main(args)

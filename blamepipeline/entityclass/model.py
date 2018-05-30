@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-28 23:59:04
+# @Last Modified time: 2018-05-30 20:52:17
 
 '''
 EntityClassifier Class Wrapper
@@ -17,7 +17,6 @@ import copy
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
-
 from torch.autograd import Variable
 
 from .config import override_model_args

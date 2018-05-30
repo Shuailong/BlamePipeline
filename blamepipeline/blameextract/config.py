@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-23 20:34:14
+# @Last Modified time: 2018-05-30 21:11:27
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -16,8 +16,9 @@ logger = logging.getLogger(__name__)
 # Index of arguments concerning the core model architecture
 MODEL_ARCHITECTURE = {
     'model_type', 'embedding_dim', 'hidden_size', 'layers',
-    'rnn_type', 'concat_rnn_layers', 'kernel_sizes', 'include_emb',
-    'add_self_attn', 'unk_entity', 'feature_size', 'add_elmo', 'add_sdf'
+    'rnn_type', 'concat_rnn_layers', 'kernel_sizes', 'unk_entity',
+    'feature_size', 'pretrain_file', 'elmo_options_file', 'elmo_weights_file',
+    'skip_rnn'
 }
 
 # Index of arguments concerning the model optimizer/training
@@ -40,26 +41,20 @@ def add_model_args(parser):
     model.add_argument('--model-type', type=str, default='context',
                        choices=['lexicon', 'context', 'biattention'],
                        help='Model architecture type')
-    model.add_argument('--include-emb', type='bool', default=False,
-                       help='Include entity embedding or not')
-    model.add_argument('--add-self-attn', type='bool', default=False,
-                       help='Add self attention layer to LSTM output')
-    model.add_argument('--add-elmo', type='bool', default=False,
-                       help='add allennlp ELMO implementation and weights')
-    model.add_argument('--add-sdf', type='bool', default=False,
-                       help='add sentence distance feature')
     model.add_argument('--unk-entity', type='bool', default=True,
                        help='Mask entity work by PAD symbol')
-    model.add_argument('--embedding-dim', type=int, default=300,
+    model.add_argument('--embedding-dim', type=int, default=100,
                        help='Embedding size if embedding_file is not given')
-    model.add_argument('--hidden-size', type=int, default=300,
+    model.add_argument('--hidden-size', type=int, default=100,
                        help='Hidden size of RNN/CNN units')
-    model.add_argument('--feature-size', type=int, default=0,
+    model.add_argument('--feature-size', type=int, default=20,
                        help='final feature layer')
     model.add_argument('--layers', type=int, default=1,
                        help='Number of encoding layers for sentence')
     model.add_argument('--rnn-type', type=str, default='lstm',
                        help='RNN type: LSTM, GRU, or RNN')
+    model.add_argument('--skip-rnn', type='bool', default=False,
+                       help='Skip RNN layer. Use embeddings directly.')
     model.add_argument('--kernel-sizes', type=int, nargs='+', default=[3, 4, 5],
                        help='CNN kernel sizes')
 
@@ -70,7 +65,7 @@ def add_model_args(parser):
 
     # Optimization details
     optim = parser.add_argument_group('Blame Extractor Optimization')
-    optim.add_argument('--dropout-emb', type=float, default=0,
+    optim.add_argument('--dropout-emb', type=float, default=0.5,
                        help='Dropout rate for word embeddings')
     optim.add_argument('--dropout-rnn', type=float, default=0.0,
                        help='Dropout rate for RNN states')
@@ -78,9 +73,9 @@ def add_model_args(parser):
                        help='Dropout rate for CNN output')
     optim.add_argument('--dropout-rnn-output', type='bool', default=True,
                        help='Whether to dropout the RNN output')
-    optim.add_argument('--dropout-feature', type=float, default=0,
+    optim.add_argument('--dropout-feature', type=float, default=0.5,
                        help='Feature layer dropout')
-    optim.add_argument('--dropout_final', type=float, default=0,
+    optim.add_argument('--dropout_final', type=float, default=0.5,
                        help='Final layer dropout')
     optim.add_argument('--optimizer', type=str, default='adam',
                        help='Optimizer: sgd or adam')
@@ -88,15 +83,15 @@ def add_model_args(parser):
                        help='Initial learning rate')
     optim.add_argument('--grad-clipping', type=float, default=3,
                        help='Gradient clipping')
-    optim.add_argument('--weight-decay', type=float, default=0,
+    optim.add_argument('--weight-decay', type=float, default=1e-8,
                        help='Weight decay factor')
     optim.add_argument('--momentum', type=float, default=0,
                        help='Momentum factor')
-    optim.add_argument('--fix-embeddings', type='bool', default=False,
+    optim.add_argument('--fix-embeddings', type='bool', default=True,
                        help='Keep word embeddings fixed (use pretrained)')
     optim.add_argument('--rnn-padding', type='bool', default=False,
                        help='Explicitly account for padding in RNN encoding')
-    optim.add_argument('--weighted-sampling', type='bool', default=True,
+    optim.add_argument('--weighted-sampling', type='bool', default=False,
                        help='Weighted sampling during training')
     optim.add_argument('--pos-weight', type=float, default=0.5,
                        help='Weighted cross entropy loss')

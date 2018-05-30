@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 21:18:00
+# @Last Modified time: 2018-05-30 20:54:19
 """Blame Extractor utilities."""
 
 import json
@@ -87,7 +87,7 @@ def split_loader(train_exs, test_exs, args, model, dev_exs=None, weighted=False)
 
     if args.debug:
         # dev and test vocabulary coverage in train
-        vocab_coverage(train_exs_, dev_exs, test_exs)
+        vocab_coverage(args, model, train_exs_, dev_exs, test_exs)
 
     return train_loader, dev_loader, test_loader
 
@@ -137,7 +137,7 @@ def split_loader_cv(train_exs, args, model, test_idxs, weighted=False):
         train_exs_ = [train_exs[i] for i in train_idxs_]
         dev_exs = [train_exs[i] for i in dev_idxs]
         test_exs = [train_exs[i] for i in test_idxs]
-        vocab_coverage(train_exs_, dev_exs, test_exs)
+        vocab_coverage(args, model, train_exs_, dev_exs, test_exs)
 
     return train_loader, dev_loader, test_loader
 

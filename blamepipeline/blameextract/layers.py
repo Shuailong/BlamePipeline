@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-11 12:19:43
+# @Last Modified time: 2018-05-30 20:50:50
 """Definitions of model layers/NN modules"""
 
 import math
@@ -12,6 +12,9 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from torch.autograd import Variable
+
 
 # ------------------------------------------------------------------------------
 # Modules
@@ -111,6 +114,8 @@ class StackedBRNN(nn.Module):
         _, idx_unsort = torch.sort(idx_sort, dim=0)
 
         lengths = list(lengths[idx_sort])
+        idx_sort = Variable(idx_sort)
+        idx_unsort = Variable(idx_unsort)
         # Sort x
         x = x.index_select(0, idx_sort)
 
@@ -153,7 +158,7 @@ class StackedBRNN(nn.Module):
             padding = torch.zeros(output.size(0),
                                   x_mask.size(1) - output.size(1),
                                   output.size(2)).type(output.data.type())
-            output = torch.cat([output, padding], 1)
+            output = torch.cat([output, Variable(padding)], 1)
 
         # Dropout on output layer
         if self.dropout_output and self.dropout_rate > 0:
