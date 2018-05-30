@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-28 19:36:25
+# @Last Modified time: 2018-05-30 11:26:53
 
 """Train the blame tie extractor"""
 
@@ -104,7 +104,7 @@ def add_train_args(parser):
     general.add_argument('--metrics', type=str, choices=['precision', 'recall', 'F1', 'acc'],
                          help='metrics to display when training', nargs='+',
                          default=['F1', 'precision', 'recall', 'acc'])
-    general.add_argument('--valid-metric', type=str, default='F1',
+    general.add_argument('--valid-metric', type=str, default='recall',
                          help='The evaluation metric used for model selection')
     general.add_argument('--uncased', type='bool', default=True,
                          help='uncase data')
