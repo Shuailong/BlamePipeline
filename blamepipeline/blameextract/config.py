@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-30 21:11:27
+# @Last Modified time: 2018-05-31 22:21:05
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -25,7 +25,7 @@ MODEL_ARCHITECTURE = {
 MODEL_OPTIMIZER = {
     'fix_embeddings', 'optimizer', 'learning_rate', 'momentum', 'weight_decay',
     'rnn_padding', 'dropout_rnn', 'dropout_cnn', 'dropout_rnn_output', 'dropout_emb',
-    'grad_clipping', 'dropout_feature', 'dropout_final', 'pos_weight'
+    'grad_clipping', 'dropout_feature', 'dropout_final', 'pos_weight', 'xavier_init'
 }
 
 
@@ -79,6 +79,8 @@ def add_model_args(parser):
                        help='Final layer dropout')
     optim.add_argument('--optimizer', type=str, default='adam',
                        help='Optimizer: sgd or adam')
+    optim.add_argument('--xavier-init', type='bool', default=False,
+                       help='Xavier initialization')
     optim.add_argument('--learning-rate', type=float, default=1e-3,
                        help='Initial learning rate')
     optim.add_argument('--grad-clipping', type=float, default=3,
