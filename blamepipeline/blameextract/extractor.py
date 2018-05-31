@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:42:04
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-31 22:28:26
+# @Last Modified time: 2018-05-31 22:34:07
 """Implementation of the Blame Extractor Class."""
 
 import torch
@@ -37,7 +37,7 @@ class LSTMContextClassifier(nn.Module):
                              dropout=0)
             self.elmo_linear = nn.Linear(1024, args.embedding_dim, bias=False)
             if args.xavier_init:
-                nn.init.xavier_uniform_(self.elmo_linear.weight)
+                nn.init.xavier_uniform(self.elmo_linear.weight)
 
         if not args.skip_rnn:
             self.sent_rnn = layers.StackedBRNN(
@@ -63,12 +63,12 @@ class LSTMContextClassifier(nn.Module):
             self.condense_feature = nn.Linear(out_hidden_size, args.feature_size)
             self.linear = nn.Linear(args.feature_size, 2)
             if args.xavier_init:
-                nn.init.xavier_uniform_(self.condense_feature.weight)
-                nn.init.xavier_uniform_(self.linear.weight)
+                nn.init.xavier_uniform(self.condense_feature.weight)
+                nn.init.xavier_uniform(self.linear.weight)
         else:
             self.linear = nn.Linear(out_hidden_size, 2)
             if args.xavier_init:
-                nn.init.xavier_uniform_(self.linear.weight)
+                nn.init.xavier_uniform(self.linear.weight)
 
     def forward(self, x, x_mask, batch_spos, batch_tpos, batch_sent_chars):
         """Inputs:
