@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-06-01 10:15:05
+# @Last Modified time: 2018-06-01 17:52:35
 
 """Train the blame tie extractor"""
 
@@ -89,7 +89,7 @@ def add_train_args(parser):
                        help='dev file')
     files.add_argument('--test-file', type=str, default='samples-directed-test.json',
                        help='test file')
-    files.add_argument('--stats-file', type='bool', default=False,
+    files.add_argument('--stats-file', type='bool', default=True,
                        help='store training stats in to file for display in codalab')
     files.add_argument('--embed-dir', type=str, default=EMBED_DIR,
                        help='Directory of pre-trained embedding files')
@@ -111,7 +111,7 @@ def add_train_args(parser):
                          help='uncase data')
     general.add_argument('--vocab-cutoff', type=int, default=1,
                          help='word frequency larger than this will be in dictionary')
-    general.add_argument('--visdom', type='bool', default=False,
+    general.add_argument('--visdom', type='bool', default=True,
                          help='Use visdom to visualize loss etc.')
     general.add_argument('--visdom-port', type=int, default=9707,
                          help='Visdom port number')
@@ -206,10 +206,12 @@ def init_from_scratch(args, train_exs, dev_exs, test_exs):
     logger.info('-' * 100)
     logger.info('Build dictionary')
     word_dict = utils.build_word_dict(args, train_exs + dev_exs + test_exs, cutoff=args.vocab_cutoff)
-    logger.info('Num words = %d' % len(word_dict))
+    logger.info(f'Num words = {len(word_dict)}')
+    entity_dict = utils.build_entity_dict(args, train_exs)
+    logger.info(f'Num entities in train: {len(entity_dict)}')
 
     # Initialize model
-    model = BlameExtractor(config.get_model_args(args), word_dict)
+    model = BlameExtractor(config.get_model_args(args), word_dict, entity_dict)
 
     # Load pretrained embeddings for words in dictionary
     if args.pretrain_file and ('glove' in args.pretrain_file or 'w2v' in args.pretrain_file):
@@ -286,16 +288,16 @@ def validate(args, data_loader, model, global_stats, mode, confusion_meter=None)
         if mode == 'train' and examples >= 1e4:
             break
 
-    preds = torch.cat(preds, dim=0)
-    trues = torch.cat(trues, dim=0)
-    preds = preds.cpu().data.numpy()
-    trues = trues.cpu().numpy()
+    preds_t = torch.cat(preds, dim=0).data
+    trues_t = torch.cat(trues, dim=0)
+    preds = preds_t.cpu().numpy()
+    trues = trues_t.cpu().numpy()
 
     metrics = {m: v for m, v in evaluate(preds, trues).items() if m in args.metrics}
 
     cm = None
     if confusion_meter:
-        confusion_meter.add(preds, trues)
+        confusion_meter.add(preds_t, trues_t)
         cm = confusion_meter.value()
 
     logger.info(f'{mode} valid: Epoch = {global_stats["epoch"]} (best:{global_stats["best_epoch"]}) | ' +

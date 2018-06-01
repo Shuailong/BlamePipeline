@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-30 22:40:58
+# @Last Modified time: 2018-06-01 17:32:31
 
 '''
 BlameExtractor Class Wrapper
@@ -20,7 +20,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 from .config import override_model_args
-from .extractor import LSTMContextClassifier, BiAttentionClassifier
+from .extractor import LSTMContextClassifier, EntityClassifier
 
 
 logger = logging.getLogger(__name__)
@@ -35,11 +35,13 @@ class BlameExtractor(object):
     # Initialization
     # --------------------------------------------------------------------------
 
-    def __init__(self, args, word_dict, state_dict=None):
+    def __init__(self, args, word_dict, entity_dict, state_dict=None):
         # Book-keeping.
         self.args = args
         self.word_dict = word_dict
         self.args.vocab_size = len(word_dict)
+        self.entity_dict = entity_dict
+        self.args.entity_size = len(entity_dict)
         self.updates = 0
         self.device = None
         self.parallel = False
@@ -47,8 +49,8 @@ class BlameExtractor(object):
         # Building network.
         if args.model_type == 'context':
             self.network = LSTMContextClassifier(args)
-        elif args.model_type == 'biattention':
-            self.network = BiAttentionClassifier(args)
+        elif args.model_type == 'entity':
+            self.network = EntityClassifier(args)
         else:
             raise RuntimeError(f'Unsupported model: {args.model_type}')
 
@@ -206,6 +208,7 @@ class BlameExtractor(object):
             state_dict.pop('fixed_embedding')
         params = {
             'state_dict': state_dict,
+            'entity_dict': self.entity_dict,
             'word_dict': self.word_dict,
             'args': self.args,
         }
@@ -221,11 +224,12 @@ class BlameExtractor(object):
             filename, map_location=lambda storage, loc: storage
         )
         word_dict = saved_params['word_dict']
+        entity_dict = saved_params['entity_dict']
         state_dict = saved_params['state_dict']
         args = saved_params['args']
         if new_args:
             args = override_model_args(args, new_args)
-        return BlameExtractor(args, word_dict, state_dict)
+        return BlameExtractor(args, word_dict, entity_dict, state_dict)
 
     # --------------------------------------------------------------------------
     # Runtime

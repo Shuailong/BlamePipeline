@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-31 22:21:05
+# @Last Modified time: 2018-06-01 17:51:28
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -18,7 +18,7 @@ MODEL_ARCHITECTURE = {
     'model_type', 'embedding_dim', 'hidden_size', 'layers',
     'rnn_type', 'concat_rnn_layers', 'kernel_sizes', 'unk_entity',
     'feature_size', 'pretrain_file', 'elmo_options_file', 'elmo_weights_file',
-    'skip_rnn'
+    'skip_rnn', 'bidirectional', 'pooling', 'entity_embs', 'entity_embedding_dim'
 }
 
 # Index of arguments concerning the model optimizer/training
@@ -39,12 +39,14 @@ def add_model_args(parser):
     # Model architecture
     model = parser.add_argument_group('Blame Extractor BiLSTM Model Architecture')
     model.add_argument('--model-type', type=str, default='context',
-                       choices=['lexicon', 'context', 'biattention'],
+                       choices=['context', 'entity'],
                        help='Model architecture type')
     model.add_argument('--unk-entity', type='bool', default=True,
                        help='Mask entity work by PAD symbol')
     model.add_argument('--embedding-dim', type=int, default=100,
                        help='Embedding size if embedding_file is not given')
+    model.add_argument('--entity-embedding-dim', type=int, default=50,
+                       help='Entity embedding size')
     model.add_argument('--hidden-size', type=int, default=100,
                        help='Hidden size of RNN/CNN units')
     model.add_argument('--feature-size', type=int, default=20,
@@ -53,6 +55,13 @@ def add_model_args(parser):
                        help='Number of encoding layers for sentence')
     model.add_argument('--rnn-type', type=str, default='lstm',
                        help='RNN type: LSTM, GRU, or RNN')
+    model.add_argument('--bidirectional', type='bool', default=True,
+                       help='Whether to use BiLSTM')
+    model.add_argument('--pooling', type=str, default='mean',
+                       choices=['rand', 'max', 'mean', 'attn'],
+                       help='pooling entity representations')
+    model.add_argument('--entity-embs', type='bool', default=False,
+                       help='include entity embeddings')
     model.add_argument('--skip-rnn', type='bool', default=False,
                        help='Skip RNN layer. Use embeddings directly.')
     model.add_argument('--kernel-sizes', type=int, nargs='+', default=[3, 4, 5],
@@ -89,7 +98,7 @@ def add_model_args(parser):
                        help='Weight decay factor')
     optim.add_argument('--momentum', type=float, default=0,
                        help='Momentum factor')
-    optim.add_argument('--fix-embeddings', type='bool', default=True,
+    optim.add_argument('--fix-embeddings', type='bool', default=False,
                        help='Keep word embeddings fixed (use pretrained)')
     optim.add_argument('--rnn-padding', type='bool', default=False,
                        help='Explicitly account for padding in RNN encoding')

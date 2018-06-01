@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-30 20:54:19
+# @Last Modified time: 2018-06-01 17:19:48
 """Blame Extractor utilities."""
 
 import json
@@ -200,6 +200,18 @@ def build_word_dict(args, examples, cutoff=1):
         word_dict.add(w)
     return word_dict
 
+
+def build_entity_dict(args, examples):
+    entities = Counter()
+    for ex in examples:
+        entities[ex['src']] += 1
+        entities[ex['tgt']] += 1
+    entities = [e for e, f in entities.most_common()]
+
+    entity_dict = Dictionary()
+    for e in entities:
+        entity_dict.add(e)
+    return entity_dict
 
 # ------------------------------------------------------------------------------
 # Utility classes

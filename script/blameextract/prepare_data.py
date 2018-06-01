@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 16:18:51
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-30 20:21:13
+# @Last Modified time: 2018-06-01 16:51:21
 
 '''
 Within an article, merge the same entities and construct a map from entity name to entity id.
@@ -215,6 +215,7 @@ def main(args):
                 t_pos = [(sents.index(content[si]), wi) for si, wi in epos[tgt]]
                 sample = {'src_pos': s_pos, 'tgt_pos': t_pos,
                           'src_pos_original': epos[src], 'tgt_pos_original': epos[tgt],
+                          'src': src, 'tgt': tgt,
                           'sents': sents, 'label': label}
                 article_samples.append(sample)
 
@@ -237,10 +238,66 @@ def main(args):
         dev_articles_samples = samples[train_articles_num:train_articles_num + dev_articles_num]
         test_articles_samples = samples[train_articles_num + dev_articles_num:]
 
+        if args.known_entities_only:
+            # find entities in train set
+            known_entities = set()
+            for article in train_articles_samples:
+                for sample in article:
+                    src_si, src_wi = sample['src_pos'][0]
+                    src = sample['sents'][src_si][src_wi]
+                    tgt_si, tgt_wi = sample['tgt_pos'][0]
+                    tgt = sample['sents'][tgt_si][tgt_wi]
+                    known_entities.add(src)
+                    known_entities.add(tgt)
+
+            # filter out unknown entities in dev
+            dev_articles_samples_filtered = []
+            dev_removed, dev_remains = 0, 0
+            for article in dev_articles_samples:
+                article_filtered = []
+                for sample in article:
+                    src_si, src_wi = sample['src_pos'][0]
+                    src = sample['sents'][src_si][src_wi]
+                    tgt_si, tgt_wi = sample['tgt_pos'][0]
+                    tgt = sample['sents'][tgt_si][tgt_wi]
+                    if src in known_entities and tgt in known_entities:
+                        article_filtered.append(sample)
+                        dev_remains += 1
+                    else:
+                        dev_removed += 1
+                if article_filtered:
+                    dev_articles_samples_filtered.append(article_filtered)
+            dev_articles_samples = dev_articles_samples_filtered
+
+            # filter out unknown entities in test
+            test_articles_samples_filtered = []
+            test_removed, test_remains = 0, 0
+            for article in test_articles_samples:
+                article_filtered = []
+                for sample in article:
+                    src_si, src_wi = sample['src_pos'][0]
+                    src = sample['sents'][src_si][src_wi]
+                    tgt_si, tgt_wi = sample['tgt_pos'][0]
+                    tgt = sample['sents'][tgt_si][tgt_wi]
+                    if src in known_entities and tgt in known_entities:
+                        article_filtered.append(sample)
+                        test_remains += 1
+                    else:
+                        test_removed += 1
+                if article_filtered:
+                    test_articles_samples_filtered.append(article_filtered)
+            test_articles_samples = test_articles_samples_filtered
+            print(colored(f'Removed dev {dev_removed} samples. {dev_remains} dev samples', 'yellow'))
+            print(colored(f'Removed test {test_removed} samples. {test_remains} test samples', 'yellow'))
+
         fname, ext = os.path.splitext(args.samples_file)
         train_file = fname + '-train' + ext
-        dev_file = fname + '-dev' + ext
-        test_file = fname + '-test' + ext
+        if not args.known_entities_only:
+            dev_file = fname + '-dev' + ext
+            test_file = fname + '-test' + ext
+        else:
+            dev_file = fname + '-dev-known' + ext
+            test_file = fname + '-test-known' + ext
 
         train_samples_num = 0
         with open(train_file, 'w') as f:
@@ -321,6 +378,8 @@ if __name__ == '__main__':
     parser.add_argument('--ignore-direction', type='bool', default=False)
     parser.add_argument('--split', type='bool', default=True)
     parser.add_argument('--all-entities', type='bool', default=False)
+    parser.add_argument('--known-entities-only', type='bool', default=False,
+                        help='remove samples containing unknown entities in dev and test')
 
     # utility
     parser.add_argument('--data-force', type='bool', default=False)
