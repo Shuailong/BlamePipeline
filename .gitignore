@@ -4,3 +4,4 @@ __pycache__
 *.tar.gz
 *.egg-info
 data/
+docker_data/
