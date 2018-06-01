@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-30 20:34:33
+# @Last Modified time: 2018-06-01 10:15:05
 
 """Train the blame tie extractor"""
 
@@ -322,8 +322,7 @@ def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=No
             'line', port=port, opts={'title': f'{args.model_name} Train Loss'})
         train_metric_logger = VisdomPlotLogger(
             'line', port=port, opts={'title': f'{args.model_name} Train Class Accuracy'})
-        idx2label = {i: label for label, i in model.label_dict.items()}
-        label_names = [idx2label[i] for i in range(model.args.label_size)]
+        label_names = ['0', '1']
         train_confusion_logger = VisdomLogger('heatmap',
                                               port=port,
                                               opts={'title': f'{args.model_name} Train Confusion Matrix',
@@ -336,8 +335,8 @@ def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=No
                                               opts={'title': f'{args.model_name} Valid Confusion Matrix',
                                                     'columnnames': label_names,
                                                     'rownames': label_names})
-        train_confusion_meter = tnt.meter.ConfusionMeter(model.args.label_size, normalized=True)
-        valid_confusion_meter = tnt.meter.ConfusionMeter(model.args.label_size, normalized=True)
+        train_confusion_meter = tnt.meter.ConfusionMeter(2, normalized=True)
+        valid_confusion_meter = tnt.meter.ConfusionMeter(2, normalized=True)
     else:
         train_confusion_meter = None
         valid_confusion_meter = None

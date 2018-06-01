@@ -1,11 +1,28 @@
+CMD="python train.py \
+     --model-dir . \
+     --data-dir . \
+     --embed-dir embed-dir \
+     --train-file train.json \
+     --dev-file dev.json \
+     --test-file test.json \
+     --pretrain-file elmo \
+     --fix-embeddings True \
+     --unk-entity False \
+     --xavier-init True \
+     --early-stopping 5 \
+     --batch-size 1 \
+     --test-batch-size 1 \
+     --display-iter 1250 \
+     --stats-file True"
+echo $CMD
+
 cl run \
 	train.py:script/blameextract/train.py \
-	samples-undirected-train.json:dataset/samples-undirected-train.json \
-	samples-undirected-dev.json:dataset/samples-undirected-dev.json \
-	samples-undirected-test.json:dataset/samples-undirected-test.json \
+	train.json:directed-dataset/samples-directed-train.json \
+	dev.json:directed-dataset/samples-directed-dev.json \
+	test.json:directed-dataset/samples-directed-test.json \
 	embed-dir:elmo-weights \
-	data-dir:dataset\
-	'python train.py --pretrain-file elmo --batch-size 1 --embed-dir embed-dir --data-dir data-dir --test-batch-size 1 --display-iter 1250 --train-file samples-undirected-train.json --dev-file samples-undirected-dev.json --test-file samples-undirected-test.json --fix-embeddings True --unk-entity True --early-stopping 5 --stats-file True' \
+	"$CMD" \
 	--request-docker-image shuailongliang/blamepipeline:0.3.1 \
   	--request-gpus 1 \
   	--request-time 2d \
