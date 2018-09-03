@@ -1,69 +1,36 @@
-%
-% File conll2018.tex
-%
-%% Based on the style files for CoNLL 2018, which were
-%% Based on the style files for EMNLP 2018, which were
-%% Based on the style files for ACL 2018, which were
-%% Based on the style files for ACL-2015, with some improvements
-%%  taken from the NAACL-2016 style
-%% Based on the style files for ACL-2014, which were, in turn,
-%% based on ACL-2013, ACL-2012, ACL-2011, ACL-2010, ACL-IJCNLP-2009,
-%% EACL-2009, IJCNLP-2008...
-%% Based on the style files for EACL 2006 by 
-%%e.agirre@ehu.es or Sergi.Balari@uab.es
-%% and that of ACL 08 by Joakim Nivre and Noah Smith
-
-\documentclass[11pt,a4paper]{article}
-\usepackage[hyperref]{conll2018}
+\def\year{2018}\relax
+\documentclass[letterpaper]{article}
+\usepackage{aaai18}
 \usepackage{times}
-\usepackage{latexsym}
-
+\usepackage{helvet}
+\usepackage{courier}
 \usepackage{url}
-
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{times}
-\usepackage{xcolor}
-\usepackage{soul}
-\usepackage[utf8]{inputenc}
-\usepackage[small]{caption}
-\usepackage{latexsym} 
-\usepackage{multirow}
 \usepackage{graphicx}
 \usepackage{diagbox}
-\usepackage{accents}
+\usepackage{multirow}
 \usepackage{romannum}
+\usepackage{amsmath}
 
-\AtBeginDocument{\pagenumbering{arabic}}
+\frenchspacing
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
 
-%\aclfinalcopy % Uncomment this line for the final submission
-
-%\setlength\titlebox{5cm}
-% You can expand the titlebox if you need extra space
-% to show all the authors. Please do not make the titlebox
-% smaller than 5cm (the original size); we will check this
-% in the camera-ready version and ask you to change it back.
-
-\newcommand\BibTeX{B{\sc ib}\TeX}
-\newcommand\confname{CoNLL 2018}
-\newcommand\conforg{SIGNLL}
+\pdfinfo{
+/Title (Who Blames Whom in a Crisis? Detecting Blame Ties from News Articles Using A Neural Network)
+/Author (Shuailong Liang, Olivia Nicol, Yue Zhang)
+}
+\setcounter{secnumdepth}{0}  
+ \begin{document}
 
 \title{Who Blames Whom in a Crisis? Detecting Blame Ties from News Articles Using A Neural Network}
-
-\author{
-% Shuailong Liang, Olivia Nicol, Yue Zhang
-% \\ 
-% Singapore University of Technology and Design \\
-% shuailong\_liang@mymail.sutd.edu.sg,
-% \{olivia\_nicol, yue\_zhang\}@sutd.edu.sg,
+\author{Shuailong Liang, Olivia Nicol, Yue Zhang\\ 
+		Singapore University of Technology and Design \\
+		shuailong\_liang@mymail.sutd.edu.sg,
+		\{olivia\_nicol, yue\_zhang\}@sutd.edu.sg
 }
-
-\date{}
-
-\begin{document}
 \maketitle
 \begin{abstract}
-Blame games tend to follow major disruptions, be they financial crises, natural disasters or terrorist attacks. To study how the blame game evolves and shapes dominant crises narratives is of great significance, as sense-making processes can affect regulatory outcomes, social hierarchies and cultural norms. However, it takes tremendous time and effort for social scientists to manually examine each relevant news article and extract the blame ties (A blames B). In this study, we define a new task, named Blame Tie Extraction, and construct a new dataset related to the United States financial crisis (2007-2010) from {\it The New York Times}, {\it The Wall Street Journal} and {\it USA Today}. Using an end-to-end approach, we build a bi-directional Long Short-Term Memory (LSTM) network on contexts where the entities appear and learn to automatically extract such blame ties on document level. Leveraging on the large unsupervised model such as GloVe and ELMo, our best model achieves F score of 76\% and 70\% on development set and test set respectively for blame tie extraction, making it a useful tool for social scientists to extract blame ties more efficiently.
+Blame games tend to follow major disruptions, be they financial crises, natural disasters or terrorist attacks. To study how the blame game evolves and shapes dominant crises narratives is of great significance, as sense-making processes can affect regulatory outcomes, social hierarchies and cultural norms. However, it takes tremendous time and effort for social scientists to manually examine each relevant news article and extract the blame ties (A blames B). In this study, we define a new task, named Blame Tie Extraction, and construct a new dataset related to the United States financial crisis (2007-2010) from {\it The New York Times}, {\it The Wall Street Journal} and {\it USA Today}. Using an end-to-end approach, we build a bi-directional Long Short-Term Memory (LSTM) network on contexts where the entities appear and learn to automatically extract such blame ties on document level. Leveraging on the large unsupervised model such as GloVe and ELMo, our best model achieves F1 score of 76\% and 70\% on development set and test set respectively for blame tie extraction, making it a useful tool for social scientists to extract blame ties more efficiently.
 \end{abstract}
 
 \section{Introduction}
@@ -90,7 +57,7 @@ We conduct a case study on blame games for the U.S. financial crisis (2007-2010)
 
 NLP has become an increasingly popular tool in social science. \citeauthor{o2010tweets} [\citeyear{o2010tweets}] aligned sentiment measured from Twitter to public opinion measured from polls, and found the two correlate well. \citeauthor{bamman2015open} [\citeyear{bamman2015open}] tried to use text data to estimate the political ideologies of individuals. \citeauthor{preoctiuc2017beyond} [\citeyear{preoctiuc2017beyond}] also predicted political ideologies of twitter users, in a more fine-grained form. Social scientists used NLP along with network analysis etc. to analyze social media texts~\cite{rule2015lexical} and State of Union addresses in United States~\cite{bail2016combining}.
 
-The Blame Tie Extraction Task can be regarded as a special case of relation extraction ~\cite{miwa2016end}. The differences are two-fold: 1) Most relation extraction systems work at sentence level, while our system works at document level. 2) In relation extraction, we need to extract both entities and their relations in pipeline ~\cite{nadeau2007survey,rink2010utd} or jointly ~\cite{zheng2017joint}, while in the Blame Tie Extraction Task, we are given the entities we are interested in, besides the article text, and we try to predict the blame ties that exist between these entities.
+The Blame Tie Extraction Task can be regarded as a special case of relation extraction ~\cite{miwa2016end}. The differences are two-fold: 1) Most relation extraction systems work at sentence level, while our system works at document level. 2) In relation extraction, we need to extract both entities and their relations in pipeline ~\cite{nadeau2007survey,rink2010utd} or jointly ~\cite{zheng2017joint}, while in the Blame Tie Extraction Task, we are given the entities we are interested in, besides the article text, and we try to predict the blame ties that exist between these entities. Although a full pipelined sytem may be more useful, in this paper we only investigate {\it the blame tie extraction} part, since 1) our work is on the article level instead of sentence level, therefore there would be too many entities to consider, increasing the sparsity of the data 2) social scientisits only care about a few key players intead of all the entities, and most entities in the passage may be irrelevant for studying the blame game.
 
 To the best of our knowledge, our work is the first to study the Blame Tie Extraction Task using NLP techniques.
 
@@ -98,7 +65,7 @@ To the best of our knowledge, our work is the first to study the Blame Tie Extra
 \label{dataset}
 The second author manually created a dataset on U.S. financial crisis. The dataset was drawn from three newspapers in the U.S., including {\it The New York Times}, {\it The Wall Street Journal} and {\it USA Today}, chosen for three main reasons. First, they are the most widely circulated newspapers in the United States. Second, they cover the social spectrum from elite to mass. Third, they also cover the political spectrum: from the quite liberal {\it New York Times}, to the centrist {\it USA Today}, to the conservative {\it Wall Street Journal}~\cite{gentzkow2010drives,groseclose2005measure}. The time period studied here spans from August 2007, after the first warning signs for the crisis appeared, to June 2010, right before the signature of the largest set of financial regulations since the Great Depression.
 
-We use a set of key words to filter the articles gathered from Factiva\footnote{https://www.dowjones.com/products/factiva/} and LexisNexis\footnote{https://www.lexisnexis.com}, getting articles containing blame patterns for the crisis. The key words we use are blame related (such as {\it attack}, {\it accuse}, {\it misconduct}, \ldots) or event related (such as {\it financial crisis}, {\it global recession}, {\it housing bubble}, \ldots)\footnote{The full list of keywords are released along with the code.}. The two classes of key words are combined together to filter the articles.
+We use a set of key words to filter the articles gathered from Factiva\footnote{https://www.dowjones.com/products/factiva/} and LexisNexis\footnote{https://www.lexisnexis.com}, getting articles containing blame patterns for the crisis. The key words we use are blame related (such as {\it attack}, {\it accuse}, {\it misconduct}, \ldots) or event related (such as {\it financial crisis}, {\it global recession}, {\it housing bubble}, \ldots)\footnote{The full list of keywords are released along with the code.}. There are in total 70 blame related words and 13 event related words (stem form). The two classes of key words are combined together to filter the articles.
 
 \begin{table}[t!]
 \centering
@@ -132,6 +99,8 @@ Blame incidences are manually coded for each article. The identification of a bl
 \label{table:samplestats}
 \end{table}
 
+To ensure the reliability of the dataset, we asked two more annotators to annotate a subset of the dataset. Concretely, we sample 100 articles, including 13 articles from {\it USA Today}, 43 articles from {\it The New York Times}, and 44 articles from {\it The Wall Street Journal}, in the same ratio as the whole dataset. Then we ran evaluations using the two annotators' results against the gold data. The average of the F1 score of the two annotators is 94.425\%, which illustrates the strong inter-annotator agreement of the dataset.
+
 In the training process, the extracted blame ties serve as positive samples. The negative samples are generated by considering all possible permutations of the entities involved in any blame ties, and then removing the positive entity pairs. The samples statistics about the whole dataset are shown in Table~\ref{table:samplestats}. Theoretically, the number of negative samples will increase quadratically with the number of entities in the article. In our dataset, the entities we considered per article are on average 3. Therefore the dataset is not severely unbalanced.
 
 An article and its annotations are shown in Table~\ref{table:samples}. The article talks about the reactions and attitudes of a real-estate company, a health-care company and general Americans (mainly readers of {\it The Wall Street Journal}) towards an incoming Federal Reserve meeting on tax cut. 6 entities are mentioned and 4 blame ties are extracted from this article.
@@ -147,10 +116,10 @@ An article and its annotations are shown in Table~\ref{table:samples}. The artic
 ...
 Ordinarily, {\bf Americans} welcome lower interest rates. But many feel differently this time. Some think the economy is fine and inflation is the main danger. But a moral element is also at work: Many think a rate cut would reward foolish speculation and {\bf Wall Street} greed at the expense of the thrifty (1).
 
-``The Federal Reserve needs to stand its ground and not bail out {\bf hedge funds} -- they should have known better to begin with!'' {\bf Suzanne Mitchell}, an administrative assistant at a Houston real-estate company, says in an email (2). In an interview, she adds: ``I'm very sorry that {\bf people} took out \$450,000 mortgages with no money down ... {\bf people} ought to be responsible for the loans they take out.'' (3)
+``The {\bf Federal Reserve} needs to stand its ground and not bail out hedge funds -- they should have known better to begin with!'' {\bf Suzanne Mitchell}, an administrative assistant at a Houston real-estate company, says in an email (2). In an interview, she adds: ``I'm very sorry that {\bf people} took out \$450,000 mortgages with no money down ... {\bf people} ought to be responsible for the loans they take out.'' (3)
 \ldots
 
-But Mr. {\bf Brason} contrasts that with the far greater reliance on borrowed money that is typical nowadays. Some ``of us ... weren't buying up five or 10 properties without any money down,'' he says. ``{\bf People} took the risks and should pay the price. (4) A lot of others at the higher end of the food chain, the investment bankers and hedge-fund managers were making oodles of fee-income money and frankly, there's a lot of public opinion that it was excessive.''
+But Mr. {\bf Brason} contrasts that with the far greater reliance on borrowed money that is typical nowadays. Some ``of us ... weren't buying up five or 10 properties without any money down,'' he says. ``{\bf People} took the risks and should pay the price. (4) A lot of others at the higher end of the food chain, the {\bf investment bankers} and {\bf hedge-fund managers} were making oodles of fee-income money and frankly, there's a lot of public opinion that it was excessive. (5) ''
 \ldots
 } \\
 \hline
@@ -158,9 +127,11 @@ But Mr. {\bf Brason} contrasts that with the far greater reliance on borrowed mo
 {\bf Blame Source} & {\bf Blame Target} & {\bf Causality Link}\\ 
 \hline
 Americans($e_1$) & Wall Street($e_2$) & (1) \\
-Suzanne Mitchell($e_3$) & Hedge funds($e_4$) & (2) \\
+Suzanne Mitchell($e_3$) & Federal Reserve($e_4$) & (2) \\
 Suzanne Mitchell($e_3$) & people($e_5$) & (3) \\
 Brason($e_6$) & people($e_5$) & (4) \\
+Brason($e_6$) & investment bankers ($e_7$) & (5) \\
+Brason($e_6$) & hedge-fund managers ($e_8$) & (5) \\
 \hline
 \end{tabular}
 \caption{An article titled {\it Rate Cut Has Foes on Main Street} ({\it The Wall Street Journal}, September 2007). Top: paragraphs of the article containing blame patterns. The blame entities are in {\bf bold face}. Bottom: blame ties extracted from the article.}
@@ -169,35 +140,22 @@ Brason($e_6$) & people($e_5$) & (4) \\
 
 \begin{table}[t!]
 \centering
-\begin{tabular}{| c | c c c c c c |} 
+\begin{tabular}{| c | c c c c c c c c | } 
  \hline
- \diagbox{{\bf source}}{{\bf target}} & $e_1$ &  $e_2$  & $e_3$ & $e_4$ & $e_5$ & $e_6$ \\ 
+ \diagbox{{\bf source}}{{\bf target}} & $e_1$ &  $e_2$  & $e_3$ & $e_4$ & $e_5$ & $e_6$ & $e_7$ & $e_8$ \\ 
  \hline
- $e_1$ & - & 1 & 0 & 0 & 0 & 0 \\ 
- $e_2$ & 0 & - & 0 & 0 & 0 & 0 \\
- $e_3$ & 0 & 0 & - & 1 & 1 & 0 \\
- $e_4$ & 0 & 0 & 0 & - & 0 & 0 \\
- $e_5$ & 0 & 0 & 0 & 0 & - & 0 \\
- $e_6$ & 0 & 0 & 0 & 0 & 1 & - \\
+ $e_1$ & - & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
+ $e_2$ & 0 & - & 0 & 0 & 0 & 0 & 0 & 0 \\
+ $e_3$ & 0 & 0 & - & 1 & 1 & 0 & 0 & 0 \\
+ $e_4$ & 0 & 0 & 0 & - & 0 & 0 & 0 & 0 \\
+ $e_5$ & 0 & 0 & 0 & 0 & - & 0 & 0 & 0 \\
+ $e_6$ & 0 & 0 & 0 & 0 & 1 & - & 1 & 1 \\
+ $e_7$ & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+ $e_8$ & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
  \hline
 \end{tabular}
 \caption{Matrix representation of the blame ties in Table~\ref{table:samples}.}
 \label{table:samplemat}
-\end{table}
-
-\begin{table}[t!]
-\centering
-\begin{tabular}{l c c c} 
- \hline
- &{\bf min} & {\bf avg}  &{\bf max} \\ 
- \hline\hline
-sentences per doc & 4 & 45 & 384 \\ 
-words per sentence & 1 & 26 & 159 \\
-words per doc & 133 & 1,209 & 9,064 \\
- \hline
-\end{tabular}
-\caption{Sentence and words statistics.}
-\label{table:lengthstatistic}
 \end{table}
 
 \section{Task}
@@ -230,10 +188,9 @@ Like word embedding, we hope to learn meaningful representations of the entities
   \label{figure:contextmodel}
 \end{figure*}
 
-
 The Entity Prior Model tells how likely a particular entity is to blame or be blamed without further information. In contrast, the Context Model relies only on linguistic clues from news articles, finding blame patterns explicitly or implicitly mentioned. The Context Model is thus useful across different political settings with different entities.
 
-To model context information about an entity, we first use string matching to locate the positions of all occurrences of the entity in article. A position is represented by a tuple $(s\_no, w\_no)$, where $s\_no$ and $w\_no$ denotes sentence number and word number, and the positions of blame source and blame target are denoted as $pos^s$ and $pos^t$, respectively. Second, we replace each entity mention by a special $\langle$ENTITY$\rangle$ token, so that we do not have any information regarding to the entity itself. Third, we run a bidirectional LSTM on sentences containing the entity, and use the LSTM output to represent the context of each word:
+To model context information about an entity, we first locate the positions of all occurrences of the entity in article. A position is represented by a tuple $(s\_no, w\_no)$, where $s\_no$ and $w\_no$ denotes sentence number and word number, and the positions of blame source and blame target are denoted as $pos^s$ and $pos^t$, respectively. Second, we replace each entity mention by a special $\langle$ENTITY$\rangle$ token, so that we do not have any information regarding to the entity itself. Third, we run a bidirectional LSTM on sentences containing the entity, and use the LSTM output to represent the context of each word:
 
 $$h^i_j=\mathrm{LSTM}(\mathbf{E}^w(w^i_j))$$
 
@@ -252,6 +209,21 @@ We conduct experiments on our dataset using the Entity Prior Model, the Context 
 
 \subsection{Experimental Settings}
 
+\begin{table}[t!]
+\centering
+\begin{tabular}{l c c c} 
+ \hline
+ &{\bf min} & {\bf avg}  &{\bf max} \\ 
+ \hline\hline
+sentences per doc & 4 & 45 & 384 \\ 
+words per sentence & 1 & 26 & 159 \\
+words per doc & 133 & 1,209 & 9,064 \\
+ \hline
+\end{tabular}
+\caption{Sentence and words statistics.}
+\label{table:lengthstatistic}
+\end{table}
+
 Stanford CoreNLP ~\cite{manning-EtAl:2014:P14-5} is used to tokenize articles into sentences and words. The sentence length statistics of the dataset articles are shown in Table~\ref{table:lengthstatistic}. There is no further preprocessing except that words are converted to lower case. Dataset is split into train, dev and test set in the article level by the ratio of 8:1:1. We use F1 on positive class to measure the performance of the model.
 
 To investigate whether the learned entities representations help in blame tie extraction, we do another round of evaluations on the known entities of dev and test set as shown in Table~\ref{table:finalresult}. KNOWN denotes entity pairs both of which appear in the training data, while ALL denotes all entity pairs. By comparing the model performance on KNOWN with that of ALL, we can evaluate the usefulness of entities representations. Conversely, we can also evaluate the robustness of the model against unknown entities. Since not all entities in dev and test set appear in the training set, a special $\langle$UNK\_ENTITY$\rangle$ symbol is used to represent the entities which are not present in the training set.
@@ -268,7 +240,7 @@ As stated in Section ~\ref{contextmodel} for the BiLSTM model, we compare the mo
 \centering
 \begin{tabular}{l c}
 \hline 
-{\bf Model} & {\bf dev F1(\%) }\\ 
+{\bf Model} & {\bf dev F1 }\\ 
 \hline\hline
 LSTMRand & 50.51 \\
 LSTMMean & 50.15 \\
@@ -291,7 +263,7 @@ To investigate effects of pretrained word embeddings, we initialize the word emb
 \centering
 \begin{tabular}{l c c} 
 \hline
-{\bf Model}  & {\bf dev F1(\%) } & {\bf test F1(\%) } \\
+{\bf Model}  & {\bf dev F1 } & {\bf test F1 } \\
 \hline\hline
 random  &  62.26  & 56.11 \\ 
 GloVe fixed  & 63.09  & 62.10 \\
@@ -305,15 +277,17 @@ ELMo  & {\bf 73.16} & {\bf 66.35} \\
 
 \subsection{Results}
 
-Table~\ref{table:finalresult} exposes the final result of the Entity Model, Context Model and Combined Model. For the Context Model, we use the BiLSTM+Max pooling, and use ELMo model to get words representations.
+Table~\ref{table:finalresult} exposes the final result of the Entity Model, Context Model and Combined Model. For comparison, we also include a baseline of random guessing. For the Context Model, we use the BiLSTM+Max pooling, and use ELMo model to get words representations.
 
 \begin{table}[t]
 \centering
 \begin{tabular}{l | p{1cm} p{1cm} | p{1cm} p{1cm}} 
 \hline
 \multirow{2}{2pt}{\bf Model} & \multicolumn{2}{c}{\bf KNOWN}  & \multicolumn{2}{c}{\bf ALL} \\
- & {\bf dev F1(\%) } & {\bf test F1(\%) } & {\bf dev F1(\%) } & {\bf test F1(\%) } \\
+ & {\bf dev F1 } & {\bf test F1} & {\bf dev F1 } & {\bf test F1 } \\
 \hline\hline
+random guess & 38.81 & 38.04 & 37.39 & 32.96 \\
+\hline
 entity & 73.97 & {\bf 70.97} & 61.07 & 60.06 \\ 
 \hline
 context & 74.29  & 63.11 & 73.16 & 66.35 \\
@@ -325,11 +299,11 @@ combined & {\bf 81.75}  & 68.67 & {\bf 76.13}  & {\bf 69.92} \\
 \label{table:finalresult}
 \end{table}
 
-For the Entity Model, the performance on KNOWN entities is better than that on ALL entities. This result illustrates that the model learns prior information about the entities in the train set. From a visualization of entity embeddings using tSNE~\cite{maaten2008visualizing}, we found that entities with similar political backgrounds tend to be close to each other in the embedding vector space. For example, Wall Street and McCain are close to each other, which is intuitive since they were both blamed by Obama, and they both blamed Obama and Bernanke, according to the training data. In addition, Obama, Congress and Bernanke also form a cluster, since they were all blamed by McCain, and blamed the Fed. Part of the visualization is shown in Figure~\ref{fig:emb}.
+For the \textbf{Entity Model}, the performance on KNOWN entities is better than that on ALL entities. This result illustrates that the model learns prior information about the entities in the train set. From a visualization of entity embeddings using tSNE~\cite{maaten2008visualizing}, we found that entities with similar political backgrounds tend to be close to each other in the embedding vector space. For example, Wall Street and McCain are close to each other, which is intuitive since they were both blamed by Obama, and they both blamed Obama and Bernanke, according to the training data. In addition, Obama, Congress and Bernanke also form a cluster, since they were all blamed by McCain, and blamed the Fed. Part of the visualization is shown in Figure~\ref{fig:emb}.
 
-For the Context Model, we can see that it can effectively extract blame ties from news articles without prior entity knowledge. For known entities, the F1 is 63.11\%; for all entities in the test data, the F1 does not decrease like Entity Prior Model, it even increases to 66.35\%. Unlike knowledge about entities, linguistic knowledge generalizes robustly to unseen test data, where most entities do not exist in the training data. This implies that our model can be used to extract blame ties in other occasions where the political settings are highly different. For example, when the President of the United States changes, we can still use our model to predict how the new President will play the blame game.
+For the \textbf{Context Model}, we can see that it can effectively extract blame ties from news articles without prior entity knowledge. For known entities, the F1 is 63.11\%; for all entities in the test data, the F1 does not decrease like Entity Prior Model, it even increases to 66.35\%. Unlike knowledge about entities, linguistic knowledge generalizes robustly to unseen test data, where most entities do not exist in the training data. This implies that our model can be used to extract blame ties in other occasions where the political settings are highly different. For example, when the President of the United States changes, we can still use our model to predict how the new President will play the blame game.
 
-For the KNOWN entities, the Combined Model does not perform better than Entity Model. This shows that entities information alone may be useful in extracting blame ties than using contexts. However, such information could not be used when the entities are new, for instance, our ALL data. On ALL data, our Combined Model achieves best result on dev and test set, showing that the model can integrate context information as well as the entity prior information to make better predictions.
+For the KNOWN entities, the \textbf{Combined Model} does \textit{not} perform better than Entity Model. This shows that entities information alone may be useful in extracting blame ties than using contexts. However, such information could not be used when the entities are new, for instance, our ALL data. On ALL data, our Combined Model achieves best result on dev and test set, showing that the model can integrate context information as well as the entity prior information to make better predictions.
 
 Therefore, the Context Model is the most useful one, applicable even when we would like to use the model to extract blame tie among new entities. Entity prior information is helpful. If available, it can be used to boost the model performance.
 
@@ -422,10 +396,8 @@ Table~\ref{table:news} shows one of these new articles from Bloomberg Politics\f
 
 We investigated blame analysis, for which previous research looked at the evolution of blame frames, without systematically connecting the frames to the actors who produce them. Experiments show that neural network is effective for identifying blame ties from news articles.  Our approach can enable researchers to quantify the importance of a frame, and to understand how and why it became prevalent. It can also enable researchers to study actors' position alignments over time. We release our code and model for automatic blame tie extraction to facilitate such research.
 
-% \section*{Acknowledgments}
-% We thank Zhiyang Teng for a lot of helpful discussions, and Gokayaz Gulten for helping with proof reading. Yue Zhang is the corresponding author.
-
-\bibliography{conll2018}
-\bibliographystyle{acl_natbib_nourl}
+\bibliography{aaai18}
+\bibliographystyle{aaai}
 
 \end{document}
+

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 16:06:42
+# @Last Modified time: 2018-07-08 16:33:49
 
 """Data processing/loading helpers."""
 
@@ -41,7 +41,7 @@ class BlameTieDataset(Dataset):
 
 
 class SubsetWeightedRandomSampler(Sampler):
-    r"""Samples elements randomly from a given list of indices, without replacement.
+    """Samples elements randomly from a given list of indices, without replacement.
 
     Arguments:
         indices (list): a list of indices

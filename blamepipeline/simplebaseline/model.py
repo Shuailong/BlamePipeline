@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 20:16:42
+# @Last Modified time: 2018-07-08 21:41:06
 
 '''
 BlameExtractor Class Wrapper
@@ -32,10 +32,7 @@ class BlameExtractor(object):
         self.args = args
 
         # Building network.
-        if args.model_type == 'lexicon':
-            self.classifier = LexiconClassifier(args, lexicons, mode=args.mode)
-        else:
-            raise RuntimeError(f'Unsupported model: {args.model_type}')
+        self.classifier = LexiconClassifier(args, lexicons, mode=args.mode)
 
     # --------------------------------------------------------------------------
     # Prediction

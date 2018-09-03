@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-22 16:14:43
+# @Last Modified time: 2018-07-08 21:42:48
 
 """Run the blame tie extractor baseline"""
 
@@ -60,11 +60,11 @@ def add_train_args(parser):
                        help='Directory of training/validation data')
     files.add_argument('--log-dir', type=str, default=LOG_DIR,
                        help='Directory for saved models/checkpoints/logs')
-    files.add_argument('--train-file', type=str, default='samples.json',
+    files.add_argument('--train-file', type=str, default='samples-directed-train.json',
                        help='train file')
-    files.add_argument('--dev-file', type=str, default=None,
+    files.add_argument('--dev-file', type=str, default='samples-directed-dev.json',
                        help='dev file')
-    files.add_argument('--test-file', type=str, default=None,
+    files.add_argument('--test-file', type=str, default='samples-directed-test.json',
                        help='test file')
     files.add_argument('--blame-lexicons', type=str, default='blame_lexicons.txt')
     # General

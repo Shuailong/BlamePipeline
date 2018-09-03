@@ -4,19 +4,17 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 17:19:05
+# @Last Modified time: 2018-07-08 19:56:24
 """Blame Extractor utilities."""
 
 import json
 import time
 import logging
 import random
-from collections import Counter
 
 import torch
 
 from .data import BlameTieDataset
-from .data import SubsetWeightedRandomSampler
 from . import vector
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-10 20:36:51
+# @Last Modified time: 2018-07-08 19:55:05
 
 """Model architecture/optimization options for Blame Extractor."""
 
@@ -28,9 +28,6 @@ def add_model_args(parser):
 
     # Model architecture
     model = parser.add_argument_group('Blame Extractor Baseline Model Architecture')
-    model.add_argument('--model-type', type=str, default='lexicon',
-                       choices=['lexicon', 'context', 'biattention'],
-                       help='Model architecture type')
     model.add_argument('--mode', type=str, default='random',
                        help='Baseline mode')
 
