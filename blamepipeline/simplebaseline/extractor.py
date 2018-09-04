@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:42:04
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-05-14 11:03:33
+# @Last Modified time: 2018-09-04 01:06:50
 """Implementation of the Blame Extractor Baseline Class."""
 
 # ------------------------------------------------------------------------------
@@ -38,9 +38,9 @@ class LexiconClassifier(object):
             elif self.mode == 'mode3':
                 label = self._mode3(spos, tpos, sents)
             elif self.mode == 'mode1+mode3':
-                label = 1 if self._mode1(spos, tpos) and self._mode3(spos, tpos, sents) else 0
+                label = 1 if self._mode1(sapos, tapos) and self._mode3(spos, tpos, sents) else 0
             elif self.mode == 'mode2+mode3':
-                label = 1 if self._mode2(spos, tpos) and self._mode3(spos, tpos, sents) else 0
+                label = 1 if self._mode2(sapos, tapos) and self._mode3(spos, tpos, sents) else 0
             else:
                 # random
                 label = random.randint(0, 1)

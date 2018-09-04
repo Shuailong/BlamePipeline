@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-06-01 17:52:35
+# @Last Modified time: 2018-09-04 12:23:56
 
 """Train the blame tie extractor"""
 
@@ -401,9 +401,8 @@ def train_valid_loop(train_loader, dev_loader, test_loader, args, model, fold=No
 
     logger.info('Load best model...')
     model = BlameExtractor.load(args.model_file + fold_info, args)
-    # device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
-    # model.to(device)
-    model.cuda()
+    device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
+    model.to(device)
     stats['epoch'] = stats['best_epoch']
     if fold is not None:
         mode = f'fold {fold} test'
@@ -423,10 +422,8 @@ def initialize_model(train_exs, dev_exs, test_exs):
     model.init_optimizer()
 
     # Use the GPU?
-    # device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
-    # model.to(device)
-    if args.cuda:
-        model.cuda()
+    device = torch.device(f"cuda:{args.gpu}" if args.cuda else "cpu")
+    model.to(device)
 
     # Use multiple GPUs?
     if args.parallel:

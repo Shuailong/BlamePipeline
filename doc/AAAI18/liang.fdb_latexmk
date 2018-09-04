@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex liang"] 1535978545 "liang.aux" "liang.bbl" "liang" 1535989310
+["bibtex liang"] 1535995680 "liang.aux" "liang.bbl" "liang" 1535996008
   "./aaai.bst" 1535506756 21725 6d8748be1c9864381e507b2fcffde491 ""
   "aaai18.bib" 1527925122 10956 d5851dac585dfd176081e3c5f1c7ced9 ""
-  "liang.aux" 1535979495 4287 5cdd62110fdfa09941ed4c43db9c5c6e ""
+  "liang.aux" 1535996008 4331 950ba17509c0f3b9e4e09cc056c8f0d4 ""
   (generated)
-  "liang.bbl"
   "liang.blg"
-["pdflatex"] 1535979494 "liang.tex" "liang.pdf" "liang" 1535989310
+  "liang.bbl"
+["pdflatex"] 1535996007 "liang.tex" "liang.pdf" "liang" 1535996008
   "/usr/local/texlive/2017/texmf-dist/fonts/enc/dvips/base/8r.enc" 1480098666 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2017/texmf-dist/fonts/map/fontname/texfonts.map" 1480098670 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2017/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm" 1480098689 2172 fd0c924230362ff848a33632ed45dc23 ""
@@ -105,11 +105,11 @@
   "aaai18.sty" 1535506756 10603 664200d13f0f698249b1f69931b28a28 ""
   "contextmodel.pdf" 1531024575 29497 591791783beebccc7f060a8ce301634a ""
   "demo.pdf" 1527939638 16635 9a6ab4b1c58686d1b391fa0042a9982b ""
-  "liang.aux" 1535979495 4287 5cdd62110fdfa09941ed4c43db9c5c6e ""
-  "liang.bbl" 1535978545 8835 b7fd4f058e2da0989d471cf29aad858f "bibtex liang"
-  "liang.tex" 1535989308 38722 8bce1a4f2272c6aef47b95479c3057ec ""
+  "liang.aux" 1535996008 4331 950ba17509c0f3b9e4e09cc056c8f0d4 ""
+  "liang.bbl" 1535995680 8835 b7fd4f058e2da0989d471cf29aad858f "bibtex liang"
+  "liang.tex" 1535996007 40347 f64cecf94ffcbea5319065792f897a09 ""
   "part.jpg" 1517632833 100766 8dc2b6765cecaada86af6df9eb7922c1 ""
   (generated)
-  "liang.pdf"
   "liang.log"
   "liang.aux"
+  "liang.pdf"

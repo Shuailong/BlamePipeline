@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-06-01 17:32:31
+# @Last Modified time: 2018-09-04 12:53:37
 
 '''
 BlameExtractor Class Wrapper
@@ -17,7 +17,6 @@ import copy
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
-from torch.autograd import Variable
 
 from .config import override_model_args
 from .extractor import LSTMContextClassifier, EntityClassifier
@@ -56,7 +55,7 @@ class BlameExtractor(object):
 
         if state_dict:
             self.network.load_state_dict(state_dict)
-        self.loss_weights = torch.Tensor([1 - args.pos_weight, args.pos_weight])
+        self.loss_weights = torch.tensor([1 - args.pos_weight, args.pos_weight], dtype=torch.float, device=self.device)
 
     def load_embeddings(self, words, embedding_file):
         """Load pretrained embeddings for a given list of words, if they exist.
@@ -135,18 +134,9 @@ class BlameExtractor(object):
         self.network.train()
 
         # Transfer to GPU
-        # inputs = [e.to(device=self.device) if not isinstance(e, (list, dict)) else e for e in ex[:-1]]
-        # label = ex[-1].to(device=self.device)
-        # inputs = [Variable(e.cuda()) if isinstance(e, torch.Tensor) else e for e in ex[:-1]]
-        inputs = []
-        for e in ex[:-1]:
-            if isinstance(e, (torch.LongTensor, torch.ByteTensor, torch.cuda.LongTensor, torch.cuda.ByteTensor)):
-                inputs.append(Variable(e).cuda())
-            elif isinstance(e, Variable):
-                inputs.append(e.cuda())
-            else:
-                inputs.append(e)
-        label = Variable(ex[-1]).cuda()
+        inputs = [e.to(device=self.device) if isinstance(e, torch.Tensor) else e for e in ex[:-1]]
+        label = ex[-1].to(device=self.device)
+
         # Run forward
         score = self.network(*inputs)
 
@@ -158,14 +148,14 @@ class BlameExtractor(object):
         loss.backward()
 
         # Clip gradients
-        torch.nn.utils.clip_grad_norm(self.network.linear.parameters(),
+        torch.nn.utils.clip_grad_norm_(self.network.linear.parameters(),
                                       self.args.grad_clipping)
 
         # Update parameters
         self.optimizer.step()
         self.updates += 1
 
-        return loss.data[0], ex[0].size(0)
+        return loss.item(), ex[0].size(0)
     # --------------------------------------------------------------------------
     # Prediction
     # --------------------------------------------------------------------------
@@ -178,22 +168,10 @@ class BlameExtractor(object):
         self.network.eval()
 
         # Transfer to GPU
-        # inputs = [e.to(self.device) if not isinstance(e, (list, dict)) else e for e in ex]
-        # inputs = [Variable(e, volatile=True).cuda() if isinstance(e, torch.Tensor) else e for e in ex]
-        inputs = []
-        for e in ex:
-            if isinstance(e, (torch.LongTensor, torch.ByteTensor, torch.cuda.LongTensor, torch.cuda.ByteTensor)):
-                inputs.append(Variable(e, volatile=True).cuda())
-            elif isinstance(e, Variable):
-                e.volatile = True
-                inputs.append(e.cuda())
-            else:
-                inputs.append(e)
-
-        # with torch.no_grad():
-        #     # Run forward
-        #     score = self.network(*inputs)
-        score = self.network(*inputs)
+        inputs = [e.to(self.device) if isinstance(e, torch.Tensor) else e for e in ex]
+        with torch.no_grad():
+            # Run forward
+            score = self.network(*inputs)
 
         # Decode predictions
         return score.cpu().max(1)[1]
@@ -235,10 +213,10 @@ class BlameExtractor(object):
     # Runtime
     # --------------------------------------------------------------------------
 
-    def cuda(self):
-        # self.device = device
-        self.network = self.network.cuda()
-        # self.loss_wights = self.loss_weights.to(device)
+    def to(self, device):
+        self.device = device
+        self.network = self.network.to(device)
+        self.loss_wights = self.loss_weights.to(device)
 
     def parallelize(self):
         """Use data parallel to copy the model across several gpus.

@@ -168,7 +168,10 @@ In order to predict whether a blame tie exists between two entities based on the
 
 \section{Models}
 
-We first introduce the Entity Prior Model which directly extracts prior information about entities (i.e.\ which entities tend to blame which entities). The Entity Prior Model can learn entity information from its blame patterns, such as political standing etc., and can generalize to new events with same entities. Then, we mask out the entities mentions from text, relying purely on the contexts surrounding the mentions of the entities. The Context Model can generalize across different entities and across historical periods. Finally, a model combining the two is built to investigate the interactions.
+We first introduce a simple rule-based non-neural model. Next we introduce the Entity Prior Model which directly extracts prior information about entities (i.e.\ which entities tend to blame which entities). The Entity Prior Model can learn entity information from its blame patterns, such as political standing etc., and can generalize to new events with same entities. Then, we mask out the entities mentions from text, relying purely on the contexts surrounding the mentions of the entities. The Context Model can generalize across different entities and across historical periods. Finally, a model combining the two is built to investigate the interactions.
+
+\subsection{Rule-based Model}
+As a baseline model, we use a simple rule to decide if a blame tie exists between two entities: if the minimal distance between the two entities are less than or equal to 3, AND a blame related key word appears in any of the sentence mentioning either entity, we decide that a blame tie exists between these two entities. We set the minimal sentence distance to 3 because according the distribution of the distance between two entities in a blame tie in our dataset, over 90\% of all entity pairs has a sentence distance less than or equal to 3. It is worth noting that this rule-based model can only predict undirected blame ties.
 
 \subsection{Entity Prior Model}
 \label{entitymodel}
@@ -234,27 +237,22 @@ Our model is implemented in PyTorch\footnote{http://pytorch.org}. For the traini
 
 \subsection{Development Experiments}
 
-As stated in Section ~\ref{contextmodel} for the BiLSTM model, we compare the model performance when different pooling method is used to aggregate different contexts representations, and we also compare the bidirection LSTM with a single forward LSTM. The results on ALL dataset are shown in Table~\ref{table:BoEresult}. BiLSTM works better than LSTM for every pooling method, since we can take advantage of information from both directions of the sentence. Random pooling has the worst result, mainly because a lot of important information is lost. Max pooling has the highest score on most cases, therefore we use BiLSTM + max pooling in the following experiments.
+As stated in Section ~\ref{contextmodel} for the BiLSTM model, we compare the model performance when different pooling method is used to aggregate different contexts representations, and we also compare the bidirection LSTM with a single forward LSTM. The results on ALL dataset are shown in Table~\ref{table:contextresult}. BiLSTM works better than LSTM for every pooling method, since we can take advantage of information from both directions of the sentence. Random pooling has the worst result, mainly because a lot of important information is lost. Max pooling has the highest score on most cases, therefore we use BiLSTM + max pooling in the following experiments.
 
 \begin{table}[t!]
 \centering
-\begin{tabular}{l c}
+\begin{tabular}{l c | l c}
 \hline 
-{\bf Model} & {\bf dev F1 }\\ 
+{\bf Model} & {\bf dev F1 } & {\bf Model} & {\bf dev F1} \\ 
 \hline\hline
-LSTMRand & 50.51 \\
-LSTMMean & 50.15 \\
-LSTMMax & 51.49 \\
-LSTMAttn & 50.17 \\ 
-\hline
-BiLSTMRand & 56.43 \\
-BiLSTMMean & 61.95 \\
-BiLSTMMax  & 62.26 \\
-BiLSTMAttn & 61.92 \\ 
+LSTMRand & 50.51 & BiLSTMRand & 56.43 \\
+LSTMMean & 50.15 & BiLSTMMean & 61.95 \\
+LSTMMax & 51.49 & BiLSTMMax  & 62.26 \\
+LSTMAttn & 50.17 & BiLSTMAttn & 61.92 \\ 
 \hline
 \end{tabular}
 \caption{Experiment results of Context Model using different pooling functions.}
-\label{table:BoEresult}
+\label{table:contextresult}
 \end{table}
 
 To investigate effects of pretrained word embeddings, we initialize the word embedding parameters with random initialization, GloVe pretrained word embeddings and ELMo models. Since the official release of pretrained ELMo model has the output dimension of 1024, we do a linear transformation to reduce the output dimension to 100. The tranformation matrix are part of the model parameters and are tuned during training. For GloVe we use fixed version and tuned version. For ELMo model, since it slows down the training significantly, we do not tune the model parameters. The results using BiLSTM+Max pooling are shown in Table \ref{table:pretrain}. Fixed GloVe vectors improves the dev and test F1 by 0.83\% and 4.99\%, respectively. Tuned version of GloVe does not improve that much, maybe due to the reason that the dataset is small and too many parameters will overfit the model. Pretrained ELMo model improves dev and test F1 by 10.90\% and 10.24\% compared with random initialization, proving the powerfulness of ELMo model.
@@ -278,6 +276,22 @@ ELMo  & {\bf 73.16} & {\bf 66.35} \\
 \subsection{Results}
 
 Table~\ref{table:finalresult} exposes the final result of the Entity Model, Context Model and Combined Model. For comparison, we also include a baseline of random guessing. For the Context Model, we use the BiLSTM+Max pooling, and use ELMo model to get words representations.
+
+To show that neural method outperforms the simple rule based one, we compare the neural Context Model and non neural Rule-based Model. Since Rule-based Model can only predict undirected blame ties, in this comparison we run the Context Model ignoing the direction of the blame ties. The results are shown in Table~\ref{table:nodirection}. Results show that neural model outperforms the simple rule-based model. Although the margin is not big, neural model also has the advantage that it can also predict directed blame ties.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{l c c}
+\hline
+{\bf Model} & {\bf dev F1} & {\bf test F1} \\
+\hline\hline
+rule-based & 69.83 & 62.23 \\
+context & {\bf 74.24} & {\bf 67.89} \\
+\hline
+\end{tabular}
+\caption{Comparison of Rule-based Model and Context Model, ignoring the direction of the blame ties.}
+\label{table:nodirection}
+\end{table}
 
 \begin{table}[t]
 \centering
