@@ -133,11 +133,14 @@ Miwa, M., and Bansal, M.
   structures.
 \newblock {\em arXiv preprint arXiv:1601.00770}.
 
-\bibitem[\protect\citeauthoryear{Nadeau and Sekine}{2007}]{nadeau2007survey}
-Nadeau, D., and Sekine, S.
-\newblock 2007.
-\newblock A survey of named entity recognition and classification.
-\newblock {\em Lingvisticae Investigationes} 30(1):3--26.
+\bibitem[\protect\citeauthoryear{Mohammad \bgroup et al\mbox.\egroup
+  }{2016}]{mohammad-EtAl:2016:SemEval}
+Mohammad, S.; Kiritchenko, S.; Sobhani, P.; Zhu, X.; and Cherry, C.
+\newblock 2016.
+\newblock Semeval-2016 task 6: Detecting stance in tweets.
+\newblock In {\em Proceedings of the 10th International Workshop on Semantic
+  Evaluation (SemEval-2016)},  31--41.
+\newblock San Diego, California: Association for Computational Linguistics.
 
 \bibitem[\protect\citeauthoryear{Nicol}{2016}]{nicolno}
 Nicol, O.
@@ -186,15 +189,6 @@ Preo{\c{t}}iuc-Pietro, D.; Liu, Y.; Hopkins, D.; and Ungar, L.
 \newblock In {\em Proceedings of the 55th Annual Meeting of the Association for
   Computational Linguistics (Volume 1: Long Papers)}, volume~1,  729--740.
 
-\bibitem[\protect\citeauthoryear{Rink and Harabagiu}{2010}]{rink2010utd}
-Rink, B., and Harabagiu, S.
-\newblock 2010.
-\newblock Utd: Classifying semantic relations by combining lexical and semantic
-  resources.
-\newblock In {\em Proceedings of the 5th International Workshop on Semantic
-  Evaluation},  256--259.
-\newblock Association for Computational Linguistics.
-
 \bibitem[\protect\citeauthoryear{Rule, Cointet, and
   Bearman}{2015}]{rule2015lexical}
 Rule, A.; Cointet, J.-P.; and Bearman, P.~S.
@@ -224,13 +218,5 @@ Tourish, D., and Hargie, O.
 \newblock Metaphors of failure and the failures of metaphor: A critical study
   of root metaphors used by bankers in explaining the banking crisis.
 \newblock {\em Organization Studies} 33(8):1045--1069.
-
-\bibitem[\protect\citeauthoryear{Zheng \bgroup et al\mbox.\egroup
-  }{2017}]{zheng2017joint}
-Zheng, S.; Wang, F.; Bao, H.; Hao, Y.; Zhou, P.; and Xu, B.
-\newblock 2017.
-\newblock Joint extraction of entities and relations based on a novel tagging
-  scheme.
-\newblock {\em arXiv preprint arXiv:1706.05075}.
 
 \end{thebibliography}

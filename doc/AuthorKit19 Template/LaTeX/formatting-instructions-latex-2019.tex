@@ -1,7 +1,7 @@
-\def\year{2018}\relax
+\def\year{2019}\relax
 %File: formatting-instruction.tex
 \documentclass[letterpaper]{article} %DO NOT CHANGE THIS
-\usepackage{aaai18}  %Required
+\usepackage{aaai19}  %Required
 \usepackage{times}  %Required
 \usepackage{helvet}  %Required
 \usepackage{courier}  %Required
@@ -12,14 +12,14 @@
 \setlength{\pdfpageheight}{11in}  %Required
 %PDF Info Is Required:
   \pdfinfo{
-/Title (2018 Formatting Instructions for Authors Using LaTeX)
+/Title (2019 Formatting Instructions for Authors Using LaTeX)
 /Author (AAAI Press Staff)}
 \setcounter{secnumdepth}{0}  
  \begin{document}
 % The file aaai.sty is the style file for AAAI Press 
 % proceedings, working notes, and technical reports.
 %
-\title{2018 Formatting Instructions \\for Authors Using \LaTeX{}}
+\title{2019 Formatting Instructions \\for Authors Using \LaTeX{}}
 \author{AAAI Press\\
 Association for the Advancement of Artificial Intelligence\\
 2275 East Bayshore Road, Suite 160\\
@@ -37,7 +37,7 @@ The instructions herein are provided as a general guide for experienced \LaTeX{}
 These instructions are generic. Consequently, they do not include specific dates, page charges, and so forth. Please consult your specific written conference instructions for details regarding your submission. Please review the entire document for specific instructions that might apply to your particular situation. All authors must comply with the following:
 
 \begin{itemize}
-\item You must use the 2018 AAAI Press \LaTeX{} style file and bib file, which are located in the 2018 author kit.
+\item You must use the 2019 AAAI Press \LaTeX{} style file and bib file, which are located in the 2019 author kit.
 \item You must complete, sign, and return by the deadline the AAAI copyright form (proceedings authors) or distribution license (technical report authors).
 \item You must read and format your paper source and PDF according to the formatting instructions for authors.
 \item You must submit your electronic files and abstract using our electronic submission form \textbf{on time.}
@@ -46,7 +46,7 @@ These instructions are generic. Consequently, they do not include specific dates
 \end{itemize}
 
 \section{Copyright}
-All papers submitted for publication by AAAI Press must be accompanied by a valid signed copyright form or, in the case of technical reports, by a valid signed permission to distribute form. There are no exceptions to this requirement. You must send us the original version of this form. However, to meet the deadline, you may fax (1-650-321-4457) or scan and e-mail the form (pubforms18@aaai.org) to AAAI by the submission deadline, and then mail the original via postal mail to the AAAI office. \textbf{If you fail to send in a signed copyright or permission form, we will be unable to publish your paper. There are no exceptions to this policy.} You will find PDF versions of the AAAI copyright and permission to distribute forms in the author kit.
+All papers submitted for publication by AAAI Press must be accompanied by a valid signed copyright form or, in the case of technical reports, by a valid signed permission to distribute form. There are no exceptions to this requirement. You must send us the original version of this form. However, to meet the deadline, you may fax (1-650-321-4457) or scan and e-mail the form (pubforms19@aaai.org) to AAAI by the submission deadline, and then mail the original via postal mail to the AAAI office. \textbf{If you fail to send in a signed copyright or permission form, we will be unable to publish your paper. There are no exceptions to this policy.} You will find PDF versions of the AAAI copyright and permission to distribute forms in the author kit.
 
 \section{Formatting Requirements in Brief}
 We need source and PDF files that can be used in a variety of ways and can be output on a variety of devices. The design and appearance of the paper is governed by the aaai style file. 
@@ -214,7 +214,7 @@ PDF files contain document summary information that enables us to create an Acro
 
 
 \subsection{Illegal Commands}
-There are a number of packages, commands, scripts, and macros that are incompatable with aaai18.sty. The common ones are provided later on in this document (See some Common  Errors to Avoid).  Generally, if a command, package, script, or macro alters floats, margins, fonts, sizing, linespacing, or the presentation of the references and citations, it is unacceptable. The following commands are some of the more common ones that may not be used in your paper (this list is not exhaustive --- there are others):
+There are a number of packages, commands, scripts, and macros that are incompatable with aaai19.sty. The common ones are provided later on in this document (See some Common  Errors to Avoid).  Generally, if a command, package, script, or macro alters floats, margins, fonts, sizing, linespacing, or the presentation of the references and citations, it is unacceptable. The following commands are some of the more common ones that may not be used in your paper (this list is not exhaustive --- there are others):
 \begin{itemize}
 \item \textbackslash renewcommand (in almost all instances)
 \item \textbackslash baselinestretch
@@ -253,7 +253,7 @@ The default paper size in most installations of \LaTeX{} is A4. However, because
 
 
 \subsubsection{Column Width and Margins.}
-To ensure maximum readability, your paper must include two columns. Each column should be 3.3 inches wide (slightly more than 3.25 inches), with a .375 inch (.952 cm) gutter of white space between the two columns. The aaai18.sty file will automatically create these columns for you. 
+To ensure maximum readability, your paper must include two columns. Each column should be 3.3 inches wide (slightly more than 3.25 inches), with a .375 inch (.952 cm) gutter of white space between the two columns. The aaai19.sty file will automatically create these columns for you. 
 
 \subsection{Overlength Papers}
 If your paper is too long, turn on \textbackslash frenchspacing, which will reduce the space after periods. Next,  shrink the size of your graphics. Use \textbackslash centering instead of \textbackslash begin\{center\} in your figure environment. For mathematical environments, you may reduce fontsize {\bf but not below 6.5 point}. You may also alter the size of your bibliography by inserting \textbackslash fontsize\{9.5pt\}\{10.5pt\} \textbackslash selectfont
@@ -504,7 +504,7 @@ The PDF you submitted is A4. All PDFs must be US Letter sized. Submissions that 
 
 
 ABOVEDISPLAY\\
-You've used \textbackslash abovedisplay, \textbackslash belowdisplay, \textbackslash above caption, and \textbackslash belowcaption to alter aaai18.sty. These commands are illegal and must be stripped from your source.
+You've used \textbackslash abovedisplay, \textbackslash belowdisplay, \textbackslash above caption, and \textbackslash belowcaption to alter aaai19.sty. These commands are illegal and must be stripped from your source.
 \smallskip
 
 
@@ -524,7 +524,7 @@ The authblk.sty package cannot be used.
 
 
 AUTHOR LIST MALFORMED\\
-You did not use the built-in commands in aaai18.sty to format your authors. You need to follow the formatting instructions for authors using LaTeX. 
+You did not use the built-in commands in aaai19.sty to format your authors. You need to follow the formatting instructions for authors using LaTeX. 
 \smallskip
 
 
@@ -673,7 +673,7 @@ The nameref package cannot be used.
 
 
 NATBIB\\
-Natbib is incompatible with aaai18.sty and aaai.bst. It must be removed. See References Malformed below.
+Natbib is incompatible with aaai19.sty and aaai.bst. It must be removed. See References Malformed below.
 \smallskip
 \smallskip
 
@@ -756,12 +756,12 @@ You've adjusted the space above or below tables, figures, captions, and/or secti
 
 
 STYLE FILE OF BIBLIOGRAPHY IS INCORRECT\\
-You did not use aaai.bst (you used named.bst instead). This is not an IJCAI conference. You need to recompile your bibliography using the correct style for AAAI-18.
+You did not use aaai.bst (you used named.bst instead). This is not an IJCAI conference. You need to recompile your bibliography using the correct style for AAAI-19.
 \smallskip
 
 
 STYLE FILE IS INCORRECT\\
-You did not use aaai18.sty. This style file is required. No other style file (including previous versions of aaai.sty) may be used.
+You did not use aaai19.sty. This style file is required. No other style file (including previous versions of aaai.sty) may be used.
 \smallskip
 
 
