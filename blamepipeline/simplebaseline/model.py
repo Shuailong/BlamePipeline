@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:12:33
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-07-08 21:41:06
+# @Last Modified time: 2018-09-05 16:11:29
 
 '''
 BlameExtractor Class Wrapper
@@ -27,12 +27,12 @@ class BlameExtractor(object):
     # Initialization
     # --------------------------------------------------------------------------
 
-    def __init__(self, args, lexicons):
+    def __init__(self, args, lexicons, aggressiveness=None):
         # Book-keeping.
         self.args = args
 
         # Building network.
-        self.classifier = LexiconClassifier(args, lexicons, mode=args.mode)
+        self.classifier = LexiconClassifier(args, lexicons, aggressiveness=aggressiveness, mode=args.mode)
 
     # --------------------------------------------------------------------------
     # Prediction

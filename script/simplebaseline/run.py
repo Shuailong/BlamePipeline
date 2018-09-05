@@ -4,7 +4,7 @@
 # @Email: liangshuailong@gmail.com
 # @Date:   2018-05-09 11:14:09
 # @Last Modified by:  Shuailong
-# @Last Modified time: 2018-07-08 21:42:48
+# @Last Modified time: 2018-09-05 16:10:53
 
 """Run the blame tie extractor baseline"""
 
@@ -66,6 +66,7 @@ def add_train_args(parser):
                        help='dev file')
     files.add_argument('--test-file', type=str, default='samples-directed-test.json',
                        help='test file')
+    files.add_argument('--aggressiveness-file', type=str, default='aggressiveness.txt')
     files.add_argument('--blame-lexicons', type=str, default='blame_lexicons.txt')
     # General
     general = parser.add_argument_group('General')
@@ -102,6 +103,9 @@ def set_defaults(args):
         # Set model directory
     subprocess.call(['mkdir', '-p', args.log_dir])
     args.log_file = os.path.join(args.log_dir, 'baseline.txt')
+
+    if args.aggressiveness_file:
+        args.aggressiveness_file = os.path.join(args.data_dir, args.aggressiveness_file)
 
     return args
 
@@ -190,7 +194,14 @@ def main(args):
     logger.info('-' * 100)
     logger.info('Make data loaders')
     if args.test_file:
-        model = BaselineModel(config.get_model_args(args), lexicons)
+        aggressiveness = {}
+        if args.aggressiveness_file:
+            with open(args.aggressiveness_file) as f:
+                for line in f:
+                    entity, score = line.split(':')
+                    score = float(score)
+                    aggressiveness[entity] = score
+        model = BaselineModel(config.get_model_args(args), lexicons, aggressiveness=aggressiveness)
         train_loader, dev_loader, test_loader = utils.split_loader(train_exs, test_exs, args, model,
                                                                    dev_exs=dev_exs)
         # Validate train
