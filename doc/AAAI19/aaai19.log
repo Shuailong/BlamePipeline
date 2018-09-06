@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2018.1.8)  6 SEP 2018 16:58
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2018.1.8)  6 SEP 2018 17:55
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -365,7 +365,7 @@ texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/te
 xlive/2017/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2017
 /texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2017/texmf-dis
 t/fonts/type1/urw/times/utmri8a.pfb>
-Output written on aaai19.pdf (8 pages, 230846 bytes).
+Output written on aaai19.pdf (8 pages, 230831 bytes).
 PDF statistics:
  145 PDF objects out of 1000 (max. 8388607)
  101 compressed objects within 2 object streams
