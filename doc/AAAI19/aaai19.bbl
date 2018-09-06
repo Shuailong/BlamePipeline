@@ -88,6 +88,14 @@ Kingma, D., and Ba, J.
 \newblock Adam: A method for stochastic optimization.
 \newblock {\em arXiv preprint arXiv:1412.6980}.
 
+\bibitem[\protect\citeauthoryear{Li and Hovy}{2014}]{li-hovy:2014:EMNLP20141}
+Li, J., and Hovy, E.
+\newblock 2014.
+\newblock Sentiment analysis on the people's daily.
+\newblock In {\em Proceedings of the 2014 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP)},  467--476.
+\newblock Doha, Qatar: Association for Computational Linguistics.
+
 \bibitem[\protect\citeauthoryear{Luttrell \bgroup et al\mbox.\egroup
   }{2013}]{luttrell2013assessing}
 Luttrell, D.; Atkinson, T.; Rosenblum, H.; et~al.
