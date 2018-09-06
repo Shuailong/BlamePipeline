@@ -127,10 +127,10 @@ INPUT /usr/local/texlive/2017/texmf-dist/tex/latex/psnfss/omsptm.fd
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmsy9.tfm
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
-INPUT demo.pdf
-INPUT ./demo.pdf
+INPUT demosm.pdf
+INPUT ./demosm.pdf
 OUTPUT aaai19.pdf
-INPUT ./demo.pdf
+INPUT ./demosm.pdf
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/vf/adobe/times/ptmb7t.vf
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm

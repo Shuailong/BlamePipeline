@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex aaai19"] 1536147025 "aaai19.aux" "aaai19.bbl" "aaai19" 1536147026
+["bibtex aaai19"] 1536212126 "aaai19.aux" "aaai19.bbl" "aaai19" 1536212217
   "./aaai.bst" 1500405790 21725 6d8748be1c9864381e507b2fcffde491 ""
-  "aaai19.aux" 1536147025 4144 465886a5674b376559d6418126f9062c ""
+  "aaai19.aux" 1536212216 4145 01b51b0375217e9ffd08c7c377a7620b ""
   "aaai19.bib" 1536080165 11514 af170cb2324c80b1b498aa50a50933c9 ""
   (generated)
   "aaai19.bbl"
   "aaai19.blg"
-["pdflatex"] 1536147025 "aaai19.tex" "aaai19.pdf" "aaai19" 1536147026
+["pdflatex"] 1536212216 "aaai19.tex" "aaai19.pdf" "aaai19" 1536212217
   "/usr/local/texlive/2017/texmf-dist/fonts/enc/dvips/base/8r.enc" 1480098666 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2017/texmf-dist/fonts/map/fontname/texfonts.map" 1480098670 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2017/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm" 1480098689 2172 fd0c924230362ff848a33632ed45dc23 ""
@@ -102,13 +102,13 @@
   "/usr/local/texlive/2017/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1495593472 2350277 a699055bee05bf8a40b0504752487295 ""
   "/usr/local/texlive/2017/texmf-var/web2c/pdftex/pdflatex.fmt" 1515415204 4129591 d3dcb82fd2d3541544b460c2205f4d12 ""
   "/usr/local/texlive/2017/texmf.cnf" 1495593465 577 2b71d4d888f9e5560b2e99985915a9fa ""
-  "aaai19.aux" 1536147025 4144 465886a5674b376559d6418126f9062c ""
-  "aaai19.bbl" 1536147025 8360 de6bc1d5625aebe7bf7dc710cc65e01a "bibtex aaai19"
+  "aaai19.aux" 1536212216 4145 01b51b0375217e9ffd08c7c377a7620b ""
+  "aaai19.bbl" 1536212126 8360 de6bc1d5625aebe7bf7dc710cc65e01a "bibtex aaai19"
   "aaai19.sty" 1533077175 9544 e078e09f709249ad62fdb00e026b1c08 ""
-  "aaai19.tex" 1536147023 42299 f5aa4bd1399be3846b0bac928d7e0de8 ""
+  "aaai19.tex" 1536212215 42469 3d57f3ffe521bb5d1e7fd3f3a6628599 ""
   "contextmodel.pdf" 1531024575 29497 591791783beebccc7f060a8ce301634a ""
-  "demo.pdf" 1527939638 16635 9a6ab4b1c58686d1b391fa0042a9982b ""
+  "demosm.pdf" 1536165692 13801 1588b303e12a323478dd9c8932c26e6c ""
   (generated)
-  "aaai19.aux"
   "aaai19.pdf"
   "aaai19.log"
+  "aaai19.aux"
